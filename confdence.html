@@ -324,6 +324,22 @@ input, select, textarea {
 
 .inc-compose { margin-top: 1rem; }
 
+.mcp-panel { margin-top: 1rem; }
+
+.check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 0.65rem 0;
+}
+
+.check input {
+  width: auto;
+  margin-top: 0.25rem;
+}
+
+.check span { color: var(--ink); }
+
 .hold {
   min-height: 100vh;
   padding: 1.25rem 1.25rem 6rem;
@@ -429,6 +445,17 @@ input, select, textarea {
 
       <p class="holder"><span id="holder-name"></span> · <span data-i18n="youHold">vous détenez ce dossier</span></p>
       <p class="fine" data-i18n="deviceNote">Vit sur cet appareil. Rien n’est envoyé.</p>
+
+      <section class="panel mcp-panel" aria-labelledby="mcp-label">
+        <h2 id="mcp-label" data-i18n="mcpTitle">Agents (MCP)</h2>
+        <p class="fine" id="mcp-state"></p>
+        <p class="warn" data-i18n="mcpRiskLine">Éteint par défaut. Un agent qui y a accès lit et peut changer ce dossier.</p>
+        <div class="hero-actions">
+          <button type="button" class="primary" id="mcp-toggle" data-i18n="mcpEnable">Activer…</button>
+          <button type="button" class="ghost hidden" id="mcp-pack" data-i18n="mcpDownload">Télécharger le paquet agent</button>
+        </div>
+        <pre class="url hidden" id="mcp-snippet"></pre>
+      </section>
     </main>
   </div>
 
@@ -500,6 +527,22 @@ input, select, textarea {
       <button type="button" class="text-btn" id="inc-back" data-i18n="done">Fermer</button>
     </div>
   </section>
+
+  <dialog id="mcp-dialog" class="dialog">
+    <form id="mcp-form" method="dialog">
+      <h2 data-i18n="mcpConsentTitle">Activer l’accès agent</h2>
+      <p class="warn" data-i18n="mcpConsentLead">Ceci n’est pas anodin. Cochez chaque risque. Rien ne s’allume tant que ce n’est pas fait.</p>
+      <label class="check"><input type="checkbox" name="agents_read"> <span data-i18n="mcpAckRead">Les agents pourront lire mon groupe sanguin, mes allergies, mes médicaments, mes hôpitaux et mes incidents.</span></label>
+      <label class="check"><input type="checkbox" name="agents_write"> <span data-i18n="mcpAckWrite">Les agents pourront modifier ce dossier et déclarer des incidents.</span></label>
+      <label class="check"><input type="checkbox" name="law5"> <span data-i18n="mcpAckLaw">Ce sont des renseignements de santé au Québec (Loi 5, Loi 25). Je reste responsable de qui y touche.</span></label>
+      <label class="check"><input type="checkbox" name="leaves_device"> <span data-i18n="mcpAckLeave">Une conversation avec un agent peut envoyer ces faits hors de cet appareil, chez le fournisseur du modèle.</span></label>
+      <label class="check"><input type="checkbox" name="can_revoke"> <span data-i18n="mcpAckRevoke">Je peux éteindre l’accès. Une session déjà ouverte peut encore avoir le contexte.</span></label>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="mcp-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" id="mcp-confirm" disabled data-i18n="mcpAccept">J’accepte et j’active</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="declare-dialog" class="dialog">
     <form id="declare-form" method="dialog">
@@ -685,6 +728,24 @@ window.HEALTH_COPY = {
     notifyOpened: "Messages ouvert — envoyez pour prévenir.",
     notifyCopied: "Texte copié. Collez-le dans un message.",
     notifyBody: "Confdence {sev} — {title}. {name}. Commandant : {commander}.",
+    mcpTitle: "Agents (MCP)",
+    mcpEnable: "Activer…",
+    mcpDisable: "Éteindre",
+    mcpDownload: "Télécharger le paquet agent",
+    mcpConsentTitle: "Activer l’accès agent",
+    mcpConsentLead: "Ceci n’est pas anodin. Cochez chaque risque. Rien ne s’allume tant que ce n’est pas fait.",
+    mcpAckRead: "Les agents pourront lire mon groupe sanguin, mes allergies, mes médicaments, mes hôpitaux et mes incidents.",
+    mcpAckWrite: "Les agents pourront modifier ce dossier et déclarer des incidents.",
+    mcpAckLaw: "Ce sont des renseignements de santé au Québec (Loi 5, Loi 25). Je reste responsable de qui y touche.",
+    mcpAckLeave: "Une conversation avec un agent peut envoyer ces faits hors de cet appareil, chez le fournisseur du modèle.",
+    mcpAckRevoke: "Je peux éteindre l’accès. Une session déjà ouverte peut encore avoir le contexte.",
+    mcpAccept: "J’accepte et j’active",
+    mcpRiskLine: "Éteint par défaut. Un agent qui y a accès lit et peut changer ce dossier.",
+    mcpOff: "MCP éteint. Les agents n’ont pas accès.",
+    mcpOn: "MCP allumé. Les agents peuvent lire et écrire le paquet installé.",
+    mcpPackSaved: "Paquet agent enregistré. Installez-le avant d’ouvrir un agent.",
+    mcpNeedChecks: "Cochez chaque risque.",
+    mcpInstallHelp: "Ensuite, sur ce Mac : python3 mcp_consent.py install <paquet.json>",
   },
   en: {
     mark: "Confdence",
@@ -775,6 +836,24 @@ window.HEALTH_COPY = {
     notifyOpened: "Messages opened — send it to notify.",
     notifyCopied: "Text copied. Paste it into a message.",
     notifyBody: "Confdence {sev} — {title}. {name}. Commander: {commander}.",
+    mcpTitle: "Agents (MCP)",
+    mcpEnable: "Turn on…",
+    mcpDisable: "Turn off",
+    mcpDownload: "Download agent pack",
+    mcpConsentTitle: "Turn on agent access",
+    mcpConsentLead: "This is not casual. Check every risk. Nothing turns on until you do.",
+    mcpAckRead: "Agents will be able to read my blood type, allergies, medications, hospitals, and incidents.",
+    mcpAckWrite: "Agents will be able to change this record and declare incidents.",
+    mcpAckLaw: "This is Quebec health information (Law 5, Law 25). I stay responsible for who touches it.",
+    mcpAckLeave: "A chat with an agent may send these facts off this device, to the model provider.",
+    mcpAckRevoke: "I can turn this off. A session already open may still have the context.",
+    mcpAccept: "I accept and turn it on",
+    mcpRiskLine: "Off by default. An agent with access can read and change this record.",
+    mcpOff: "MCP off. Agents have no access.",
+    mcpOn: "MCP on. Agents can read and write the installed pack.",
+    mcpPackSaved: "Agent pack saved. Install it before opening an agent.",
+    mcpNeedChecks: "Check every risk.",
+    mcpInstallHelp: "Then on this Mac: python3 mcp_consent.py install <pack.json>",
   },
 };
 
@@ -1023,6 +1102,76 @@ window.ConfdenceIncidents = (() => {
   };
 })();
 
+window.ConfdenceMcp = (() => {
+  const KEY = "confdence.mcp.v1";
+  const VERSION = "2026-08-18";
+  const REQUIRED = [
+    "agents_read",
+    "agents_write",
+    "law5",
+    "leaves_device",
+    "can_revoke",
+  ];
+
+  function empty() {
+    return {
+      version: VERSION,
+      enabled: false,
+      acknowledged: [],
+      consented_at: null,
+    };
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      const row = raw ? Object.assign(empty(), JSON.parse(raw)) : empty();
+      if (row.version !== VERSION) return empty();
+      return row;
+    } catch (err) {
+      return empty();
+    }
+  }
+
+  function isEnabled() {
+    const row = load();
+    if (!row.enabled) return false;
+    return REQUIRED.every((ack) => row.acknowledged.indexOf(ack) !== -1);
+  }
+
+  function enable(acknowledged) {
+    const acks = REQUIRED.filter((ack) => acknowledged.indexOf(ack) !== -1);
+    if (acks.length !== REQUIRED.length) {
+      throw new Error("incomplete consent");
+    }
+    const row = {
+      version: VERSION,
+      enabled: true,
+      acknowledged: REQUIRED.slice(),
+      consented_at: new Date().toISOString(),
+    };
+    localStorage.setItem(KEY, JSON.stringify(row));
+    return row;
+  }
+
+  function disable() {
+    const row = empty();
+    row.disabled_at = new Date().toISOString();
+    localStorage.setItem(KEY, JSON.stringify(row));
+    return row;
+  }
+
+  function pack(record, incidents, consent) {
+    return {
+      consent: consent || load(),
+      record: record || {},
+      incidents: incidents || [],
+    };
+  }
+
+  return { KEY, VERSION, REQUIRED, load, isEnabled, enable, disable, pack };
+})();
+
 window.ConfdenceCard = (() => {
   function escapeHtml(value) {
     return String(value == null ? "" : value)
@@ -1188,6 +1337,7 @@ window.ConfdenceCard = (() => {
   const store = window.ConfdenceStore;
   const card = window.ConfdenceCard;
   const incidents = window.ConfdenceIncidents;
+  const mcpGate = window.ConfdenceMcp;
   const state = {
     lang: localStorage.getItem("health.lang") || "fr",
     record: store.load(),
@@ -1215,6 +1365,7 @@ window.ConfdenceCard = (() => {
     $("lang-toggle").textContent = state.lang === "fr" ? "EN" : "FR";
     renderIncidentList();
     if (state.incidentId) renderIncident();
+    renderMcp();
   }
 
   function toast(msg) {
@@ -1515,6 +1666,7 @@ window.ConfdenceCard = (() => {
     renderRecord();
     $("edit-dialog").close();
     toast(t("saved"));
+    syncMcpSnapshot();
   }
 
   function openHold() {
@@ -1621,6 +1773,11 @@ window.ConfdenceCard = (() => {
       if (!$("hold-card").classList.contains("hidden")) renderHold();
       if (state.incidentId) renderIncident();
     });
+    $("mcp-toggle").addEventListener("click", toggleMcp);
+    $("mcp-cancel").addEventListener("click", () => $("mcp-dialog").close());
+    $("mcp-form").addEventListener("submit", acceptMcp);
+    $("mcp-form").addEventListener("change", refreshMcpConfirm);
+    $("mcp-pack").addEventListener("click", downloadPack);
     $("declare-btn").addEventListener("click", openDeclare);
     $("declare-cancel").addEventListener("click", () => $("declare-dialog").close());
     $("declare-form").addEventListener("submit", declareIncident);
@@ -1653,6 +1810,125 @@ window.ConfdenceCard = (() => {
         toast(how === "shared" ? t("shared") : t("cardSaved"));
       }).catch((err) => toast(err.message));
     });
+  }
+
+  function csrfToken() {
+    const match = document.cookie.match(/(?:^|; )health_csrf=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+  }
+
+  function mcpSnippet() {
+    return [
+      "[mcp_servers.confdence]",
+      'command = "/Users/apawinski/dev/health/.venv/bin/python"',
+      'args = ["/Users/apawinski/dev/health/mcp_server.py"]',
+      "",
+      t("mcpInstallHelp"),
+    ].join("\n");
+  }
+
+  function renderMcp() {
+    const on = mcpGate.isEnabled();
+    $("mcp-state").textContent = on ? t("mcpOn") : t("mcpOff");
+    $("mcp-toggle").textContent = on ? t("mcpDisable") : t("mcpEnable");
+    $("mcp-toggle").classList.toggle("primary", !on);
+    $("mcp-toggle").classList.toggle("ghost", on);
+    $("mcp-pack").classList.toggle("hidden", !on);
+    $("mcp-snippet").classList.toggle("hidden", !on);
+    $("mcp-snippet").textContent = on ? mcpSnippet() : "";
+  }
+
+  function mcpAcksFromForm() {
+    const form = $("mcp-form");
+    return mcpGate.REQUIRED.filter((name) => form[name] && form[name].checked);
+  }
+
+  function refreshMcpConfirm() {
+    $("mcp-confirm").disabled = mcpAcksFromForm().length !== mcpGate.REQUIRED.length;
+  }
+
+  function downloadPack() {
+    const payload = mcpGate.pack(state.record, incidents.loadAll(), mcpGate.load());
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "confdence-agent-pack.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(t("mcpPackSaved"));
+  }
+
+  async function syncMcpSnapshot() {
+    if (!mcpGate.isEnabled()) return;
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    try {
+      await fetch("/api/mcp/snapshot", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify({
+          record: state.record,
+          incidents: incidents.loadAll(),
+        }),
+      });
+    } catch (err) {
+      /* Pages / file — pack download is the path */
+    }
+  }
+
+  async function persistConsent(enabled, acknowledged) {
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    try {
+      await fetch("/api/mcp/consent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify({ enabled: enabled, acknowledged: acknowledged || [] }),
+      });
+    } catch (err) {
+      /* local API optional */
+    }
+  }
+
+  function openMcpConsent() {
+    const form = $("mcp-form");
+    mcpGate.REQUIRED.forEach((name) => {
+      if (form[name]) form[name].checked = false;
+    });
+    refreshMcpConfirm();
+    $("mcp-dialog").showModal();
+  }
+
+  function acceptMcp(event) {
+    event.preventDefault();
+    const acks = mcpAcksFromForm();
+    if (acks.length !== mcpGate.REQUIRED.length) {
+      toast(t("mcpNeedChecks"));
+      return;
+    }
+    mcpGate.enable(acks);
+    $("mcp-dialog").close();
+    renderMcp();
+    persistConsent(true, acks);
+    syncMcpSnapshot();
+    downloadPack();
+  }
+
+  function toggleMcp() {
+    if (mcpGate.isEnabled()) {
+      mcpGate.disable();
+      persistConsent(false, []);
+      renderMcp();
+      return;
+    }
+    openMcpConsent();
   }
 
   function registerShell() {

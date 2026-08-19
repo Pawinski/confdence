@@ -313,6 +313,22 @@ input, select, textarea {
 
 .inc-compose { margin-top: 1rem; }
 
+.mcp-panel { margin-top: 1rem; }
+
+.check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 0.65rem 0;
+}
+
+.check input {
+  width: auto;
+  margin-top: 0.25rem;
+}
+
+.check span { color: var(--ink); }
+
 .hold {
   min-height: 100vh;
   padding: 1.25rem 1.25rem 6rem;

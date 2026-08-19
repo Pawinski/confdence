@@ -3,6 +3,7 @@
   const store = window.ConfdenceStore;
   const card = window.ConfdenceCard;
   const incidents = window.ConfdenceIncidents;
+  const mcpGate = window.ConfdenceMcp;
   const state = {
     lang: localStorage.getItem("health.lang") || "fr",
     record: store.load(),
@@ -30,6 +31,7 @@
     $("lang-toggle").textContent = state.lang === "fr" ? "EN" : "FR";
     renderIncidentList();
     if (state.incidentId) renderIncident();
+    renderMcp();
   }
 
   function toast(msg) {
@@ -330,6 +332,7 @@
     renderRecord();
     $("edit-dialog").close();
     toast(t("saved"));
+    syncMcpSnapshot();
   }
 
   function openHold() {
@@ -436,6 +439,11 @@
       if (!$("hold-card").classList.contains("hidden")) renderHold();
       if (state.incidentId) renderIncident();
     });
+    $("mcp-toggle").addEventListener("click", toggleMcp);
+    $("mcp-cancel").addEventListener("click", () => $("mcp-dialog").close());
+    $("mcp-form").addEventListener("submit", acceptMcp);
+    $("mcp-form").addEventListener("change", refreshMcpConfirm);
+    $("mcp-pack").addEventListener("click", downloadPack);
     $("declare-btn").addEventListener("click", openDeclare);
     $("declare-cancel").addEventListener("click", () => $("declare-dialog").close());
     $("declare-form").addEventListener("submit", declareIncident);
@@ -468,6 +476,125 @@
         toast(how === "shared" ? t("shared") : t("cardSaved"));
       }).catch((err) => toast(err.message));
     });
+  }
+
+  function csrfToken() {
+    const match = document.cookie.match(/(?:^|; )health_csrf=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : "";
+  }
+
+  function mcpSnippet() {
+    return [
+      "[mcp_servers.confdence]",
+      'command = "/Users/apawinski/dev/health/.venv/bin/python"',
+      'args = ["/Users/apawinski/dev/health/mcp_server.py"]',
+      "",
+      t("mcpInstallHelp"),
+    ].join("\n");
+  }
+
+  function renderMcp() {
+    const on = mcpGate.isEnabled();
+    $("mcp-state").textContent = on ? t("mcpOn") : t("mcpOff");
+    $("mcp-toggle").textContent = on ? t("mcpDisable") : t("mcpEnable");
+    $("mcp-toggle").classList.toggle("primary", !on);
+    $("mcp-toggle").classList.toggle("ghost", on);
+    $("mcp-pack").classList.toggle("hidden", !on);
+    $("mcp-snippet").classList.toggle("hidden", !on);
+    $("mcp-snippet").textContent = on ? mcpSnippet() : "";
+  }
+
+  function mcpAcksFromForm() {
+    const form = $("mcp-form");
+    return mcpGate.REQUIRED.filter((name) => form[name] && form[name].checked);
+  }
+
+  function refreshMcpConfirm() {
+    $("mcp-confirm").disabled = mcpAcksFromForm().length !== mcpGate.REQUIRED.length;
+  }
+
+  function downloadPack() {
+    const payload = mcpGate.pack(state.record, incidents.loadAll(), mcpGate.load());
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "confdence-agent-pack.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(t("mcpPackSaved"));
+  }
+
+  async function syncMcpSnapshot() {
+    if (!mcpGate.isEnabled()) return;
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    try {
+      await fetch("/api/mcp/snapshot", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify({
+          record: state.record,
+          incidents: incidents.loadAll(),
+        }),
+      });
+    } catch (err) {
+      /* Pages / file — pack download is the path */
+    }
+  }
+
+  async function persistConsent(enabled, acknowledged) {
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    try {
+      await fetch("/api/mcp/consent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify({ enabled: enabled, acknowledged: acknowledged || [] }),
+      });
+    } catch (err) {
+      /* local API optional */
+    }
+  }
+
+  function openMcpConsent() {
+    const form = $("mcp-form");
+    mcpGate.REQUIRED.forEach((name) => {
+      if (form[name]) form[name].checked = false;
+    });
+    refreshMcpConfirm();
+    $("mcp-dialog").showModal();
+  }
+
+  function acceptMcp(event) {
+    event.preventDefault();
+    const acks = mcpAcksFromForm();
+    if (acks.length !== mcpGate.REQUIRED.length) {
+      toast(t("mcpNeedChecks"));
+      return;
+    }
+    mcpGate.enable(acks);
+    $("mcp-dialog").close();
+    renderMcp();
+    persistConsent(true, acks);
+    syncMcpSnapshot();
+    downloadPack();
+  }
+
+  function toggleMcp() {
+    if (mcpGate.isEnabled()) {
+      mcpGate.disable();
+      persistConsent(false, []);
+      renderMcp();
+      return;
+    }
+    openMcpConsent();
   }
 
   function registerShell() {

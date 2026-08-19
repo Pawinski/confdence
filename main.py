@@ -20,6 +20,16 @@ from fastapi.templating import Jinja2Templates
 from qrcode.image.svg import SvgPathImage
 
 from store import Store
+from mcp_consent import (
+    CONSENT_VERSION,
+    REQUIRED_ACKS,
+    ConsentOff,
+    disable as mcp_disable,
+    enable as mcp_enable,
+    is_enabled as mcp_is_enabled,
+    load_consent,
+    save_snapshot,
+)
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / ".data"
@@ -293,3 +303,62 @@ def share_json(request: Request, token: str) -> Response:
 @app.get("/logout")
 def logout_redirect() -> RedirectResponse:
     return RedirectResponse("/", status_code=302)
+
+
+@app.get("/api/mcp/status")
+def mcp_status(request: Request) -> Response:
+    limited = _limited(request, "read")
+    if limited:
+        return limited
+    return JSONResponse(
+        {
+            "enabled": mcp_is_enabled(),
+            "version": CONSENT_VERSION,
+            "required": list(REQUIRED_ACKS),
+            "consent": load_consent(),
+        }
+    )
+
+
+@app.post("/api/mcp/consent")
+async def mcp_consent(request: Request) -> Response:
+    limited = _limited(request, "write")
+    if limited:
+        return limited
+    if not _origin_ok(request) or not _csrf_ok(request):
+        return _json_error("csrf", 403)
+    try:
+        body = await request.json()
+    except Exception:
+        return _json_error("invalid_json")
+    if not isinstance(body, dict):
+        return _json_error("invalid_json")
+    if body.get("enabled") is False:
+        return JSONResponse({"consent": mcp_disable(), "enabled": False})
+    try:
+        row = mcp_enable(list(body.get("acknowledged") or []))
+    except ValueError as exc:
+        return _json_error(str(exc))
+    return JSONResponse({"consent": row, "enabled": True})
+
+
+@app.put("/api/mcp/snapshot")
+async def mcp_snapshot(request: Request) -> Response:
+    limited = _limited(request, "write")
+    if limited:
+        return limited
+    if not _origin_ok(request) or not _csrf_ok(request):
+        return _json_error("csrf", 403)
+    try:
+        body = await request.json()
+    except Exception:
+        return _json_error("invalid_json")
+    if not isinstance(body, dict):
+        return _json_error("invalid_json")
+    record = body.get("record") if isinstance(body.get("record"), dict) else {}
+    incidents = body.get("incidents") if isinstance(body.get("incidents"), list) else []
+    try:
+        save_snapshot(record, incidents)
+    except ConsentOff as exc:
+        return _json_error(str(exc), 403)
+    return JSONResponse({"ok": True})

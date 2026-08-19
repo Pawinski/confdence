@@ -54,6 +54,13 @@ The optional FastAPI share-link path still exists. It is not how you show a doct
 - **Self-reported blood type can be wrong.** UI must say so. Source + date stay visible.
 - **No public DSQ/Carnet API** to import from. Anything that looks like a government sync is fake until it is not.
 - **Full RAMQ number (NAM) is an identifier.** Do not collect it in v0.
+- **MCP / agents.** Off until the user checks every risk. An enabled agent can read and change the record, and a chat may send those facts to a model provider. Turning it off does not erase a session already in flight.
+
+## Agents (MCP)
+
+Off by default. The in-app toggle does not flip on a single click — every risk must be checked.
+
+The GitHub Pages app cannot hand the live browser record to an agent. After consent it downloads `confdence-agent-pack.json`. Install that pack on the Mac, then point Grok at `mcp_server.py`. The server refuses every tool except `mcp_status` until the on-disk consent matches this version.
 
 ## Open readings
 

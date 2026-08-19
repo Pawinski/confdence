@@ -1,0 +1,3 @@
+[mcp_servers.confdence]
+command = "/Users/apawinski/dev/health/.venv/bin/python"
+args = ["/Users/apawinski/dev/health/mcp_server.py"]
