@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confdence</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="share-body">
+  <div class="shell">
+    {% if state == "ok" %}
+      {% set r = payload.record %}
+      {% set s = payload.share %}
+      <p class="kicker">Confdence · dossier partagé · shared record</p>
+      <p class="share-name">{{ r.display_name }}</p>
+      <section class="hero-card">
+        <p class="eyebrow">Groupe sanguin · Blood type</p>
+        <p class="blood">{{ r.blood_type or "—" }}</p>
+        <p class="blood-meta">
+          {% if r.blood_source == "lab" %}Laboratoire / Lab{% elif r.blood_source == "booklet" %}Carnet Santé{% else %}Déclaré / Self-reported{% endif %}
+          {% if r.blood_confirmed_on %} · {{ r.blood_confirmed_on }}{% endif %}
+        </p>
+        <p class="warn">Un hôpital confirmera quand même le groupe avant une transfusion. / A hospital will still confirm type before transfusion.</p>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Allergies</h2>
+          <ul class="list">
+            {% for item in r.allergies %}
+              <li><strong>{{ item.name }}</strong> · {{ item.severity }}{% if item.detail %} — {{ item.detail }}{% endif %}</li>
+            {% else %}
+              <li class="muted">Aucune déclarée / None listed</li>
+            {% endfor %}
+          </ul>
+        </article>
+        <article class="panel">
+          <h2>Médicaments · Medications</h2>
+          <ul class="list">
+            {% for item in r.medications %}
+              <li><strong>{{ item.name }}</strong>{% if item.dose %} · {{ item.dose }}{% endif %}{% if item.schedule %} · {{ item.schedule }}{% endif %}</li>
+            {% else %}
+              <li class="muted">Aucun / None</li>
+            {% endfor %}
+          </ul>
+        </article>
+        <article class="panel">
+          <h2>Conditions</h2>
+          <ul class="list">
+            {% for item in r.conditions %}
+              <li><strong>{{ item.name }}</strong>{% if item.since %} · {{ item.since }}{% endif %}</li>
+            {% else %}
+              <li class="muted">Aucune / None</li>
+            {% endfor %}
+          </ul>
+        </article>
+        <article class="panel">
+          <h2>Urgence · Emergency</h2>
+          <p class="body">
+            {% if r.emergency_name %}{{ r.emergency_name }}{% if r.emergency_phone %} · {{ r.emergency_phone }}{% endif %}
+            {% else %}—{% endif %}
+          </p>
+        </article>
+        <article class="panel">
+          <h2>Hôpitaux · Hospitals</h2>
+          <ul class="list">
+            {% for item in r.hospitals %}
+              <li><strong>{{ item.name }}</strong>{% if item.city %} · {{ item.city }}{% endif %}{% if item.note %} · {{ item.note }}{% endif %}</li>
+            {% else %}
+              <li class="muted">Aucun / None</li>
+            {% endfor %}
+          </ul>
+        </article>
+        <article class="panel">
+          <h2>Professionnels · Clinicians</h2>
+          <ul class="list">
+            {% for item in r.professionals %}
+              <li><strong>{{ item.name }}</strong>{% if item.role %} · {{ item.role }}{% endif %}{% if item.phone %} · {{ item.phone }}{% endif %}</li>
+            {% else %}
+              <li class="muted">Aucun / None</li>
+            {% endfor %}
+          </ul>
+        </article>
+      </section>
+      <p class="fine">Lecture seule. Expire {{ s.expires_at }}. Le patient détient l’original. / Read-only. Patient holds the original.</p>
+    {% elif state == "rate" %}
+      <h1>Trop de demandes</h1>
+      <p class="lede">Réessayez dans une minute.</p>
+    {% else %}
+      <h1>Lien expiré ou révoqué</h1>
+      <p class="lede">Ask the patient for a new one. / Demandez un nouveau lien.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

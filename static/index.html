@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Confdence">
+  <meta name="theme-color" content="#f3efe6">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Confdence</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="shell" id="workspace">
+    <header class="top">
+      <p class="mark" data-i18n="mark">Confdence</p>
+      <div class="top-actions">
+        <button type="button" class="lang" id="lang-toggle" aria-label="Language">EN</button>
+      </div>
+    </header>
+
+    <main id="app">
+      <section class="hero-card" aria-labelledby="blood-label">
+        <p class="eyebrow" id="blood-label" data-i18n="bloodType">Groupe sanguin</p>
+        <p class="blood is-empty" id="blood-type">—</p>
+        <p class="blood-meta" id="blood-meta"></p>
+        <p class="warn" data-i18n="transfusionNote">Un hôpital confirmera quand même votre groupe avant une transfusion. C’est normal.</p>
+        <div class="hero-actions">
+          <button type="button" class="primary" id="hold-btn" data-i18n="showDoctor">Montrer à un médecin</button>
+          <button type="button" class="ghost" id="edit-blood" data-i18n="edit">Modifier</button>
+          <button type="button" class="ghost" id="declare-btn" data-i18n="declareIncident">Déclarer un incident</button>
+        </div>
+      </section>
+
+      <section class="panel" id="incident-list-panel" aria-labelledby="inc-list-label">
+        <h2 id="inc-list-label" data-i18n="incidents">Incidents</h2>
+        <ul id="incident-list" class="list"></ul>
+      </section>
+
+      <section class="grid">
+        <article class="panel" aria-labelledby="all-label">
+          <h2 id="all-label" data-i18n="allergies">Allergies</h2>
+          <ul id="allergies" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="med-label">
+          <h2 id="med-label" data-i18n="medications">Médicaments</h2>
+          <ul id="medications" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="cond-label">
+          <h2 id="cond-label" data-i18n="conditions">Conditions</h2>
+          <ul id="conditions" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="em-label">
+          <h2 id="em-label" data-i18n="emergency">Urgence</h2>
+          <p id="emergency" class="body"></p>
+        </article>
+        <article class="panel" aria-labelledby="hosp-label">
+          <h2 id="hosp-label" data-i18n="hospitals">Hôpitaux</h2>
+          <ul id="hospitals" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="pro-label">
+          <h2 id="pro-label" data-i18n="professionals">Professionnels</h2>
+          <ul id="professionals" class="list"></ul>
+        </article>
+      </section>
+
+      <p class="holder"><span id="holder-name"></span> · <span data-i18n="youHold">vous détenez ce dossier</span></p>
+      <p class="fine" data-i18n="deviceNote">Vit sur cet appareil. Rien n’est envoyé.</p>
+    </main>
+  </div>
+
+  <section id="hold-card" class="hold hidden" aria-modal="true" role="dialog">
+    <div class="hold-sheet" id="hold-sheet">
+      <p class="kicker" data-i18n="mark">Confdence</p>
+      <p class="share-name" id="hold-name"></p>
+      <p class="eyebrow" data-i18n="bloodType">Groupe sanguin</p>
+      <p class="blood" id="hold-blood">—</p>
+      <p class="blood-meta" id="hold-meta"></p>
+      <p class="warn" data-i18n="transfusionNote">Un hôpital confirmera quand même votre groupe avant une transfusion. C’est normal.</p>
+      <div class="hold-grid">
+        <div>
+          <h2 data-i18n="allergies">Allergies</h2>
+          <ul id="hold-allergies" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="medications">Médicaments</h2>
+          <ul id="hold-medications" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="conditions">Conditions</h2>
+          <ul id="hold-conditions" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="emergency">Urgence</h2>
+          <p id="hold-emergency" class="body"></p>
+        </div>
+        <div>
+          <h2 data-i18n="hospitals">Hôpitaux</h2>
+          <ul id="hold-hospitals" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="professionals">Professionnels</h2>
+          <ul id="hold-professionals" class="list"></ul>
+        </div>
+      </div>
+      <p class="fine" data-i18n="cardFooter">Le patient détient l’original. Carte hors ligne.</p>
+    </div>
+    <div class="hold-actions no-print">
+      <button type="button" class="primary" id="print-btn" data-i18n="printPdf">Imprimer / PDF</button>
+      <button type="button" class="ghost" id="save-card" data-i18n="saveCard">Enregistrer la carte</button>
+      <button type="button" class="text-btn" id="hold-done" data-i18n="done">Fermer</button>
+    </div>
+  </section>
+
+  <section id="incident-view" class="hold hidden" aria-modal="true" role="dialog">
+    <div class="hold-sheet">
+      <p class="kicker"><span data-i18n="incident">Incident</span> · <span id="inc-sev"></span></p>
+      <p class="share-name" id="inc-title"></p>
+      <p class="blood-meta" id="inc-commander"></p>
+      <p class="fine" id="inc-status-line"></p>
+      <ol id="inc-log" class="timeline"></ol>
+      <form id="inc-log-form" class="inc-compose no-print">
+        <label><span data-i18n="logEntry">Note ou étape</span>
+          <textarea name="text" rows="3" maxlength="500" required></textarea>
+        </label>
+        <div class="hero-actions">
+          <button type="submit" class="primary" name="as" value="note" data-i18n="addNote">Ajouter une note</button>
+          <button type="submit" class="ghost" name="as" value="step" data-i18n="addStep">Ajouter une étape</button>
+        </div>
+      </form>
+    </div>
+    <div class="hold-actions no-print">
+      <button type="button" class="primary" id="inc-notify" data-i18n="notifyCommander">Prévenir le commandant</button>
+      <button type="button" class="ghost" id="inc-monitor" data-i18n="statusMonitoring">Surveillance</button>
+      <button type="button" class="ghost" id="inc-resolve" data-i18n="statusResolved">Résoudre</button>
+      <button type="button" class="text-btn" id="inc-reopen" data-i18n="statusActive">Rouvrir</button>
+      <button type="button" class="text-btn" id="inc-back" data-i18n="done">Fermer</button>
+    </div>
+  </section>
+
+  <dialog id="declare-dialog" class="dialog">
+    <form id="declare-form" method="dialog">
+      <h2 data-i18n="declareTitle">Déclarer un incident</h2>
+      <p class="fine" data-i18n="declareHelp">Un commandant, un journal, des notes au fil de l’eau. Le message ne part pas tout seul.</p>
+      <label><span data-i18n="incidentTitle">Ce qui se passe</span>
+        <input name="title" maxlength="120" required>
+      </label>
+      <label><span data-i18n="severity">Sévérité</span>
+        <select name="severity">
+          <option value="sev1" data-i18n="sev1">SEV1 · critique</option>
+          <option value="sev2" data-i18n="sev2">SEV2 · élevé</option>
+          <option value="sev3" selected data-i18n="sev3">SEV3 · moyen</option>
+          <option value="sev4" data-i18n="sev4">SEV4 · bas</option>
+        </select>
+      </label>
+      <div class="row row-2">
+        <label><span data-i18n="commander">Commandant</span>
+          <input name="commander_name" maxlength="80">
+        </label>
+        <label><span data-i18n="commanderPhone">Téléphone</span>
+          <input name="commander_phone" maxlength="32">
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="declare-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="declare">Déclarer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="edit-dialog" class="dialog">
+    <form id="edit-form" method="dialog">
+      <h2 data-i18n="editTitle">Modifier le dossier</h2>
+      <label><span data-i18n="name">Nom</span>
+        <input name="display_name" maxlength="80" required>
+      </label>
+      <div class="row">
+        <label><span data-i18n="abo">ABO</span>
+          <select name="blood_abo">
+            <option value="">—</option>
+            <option>O</option><option>A</option><option>B</option><option>AB</option>
+          </select>
+        </label>
+        <label><span data-i18n="rh">Rh</span>
+          <select name="blood_rh">
+            <option value="">—</option>
+            <option value="+">+</option>
+            <option value="-">−</option>
+          </select>
+        </label>
+        <label><span data-i18n="source">Source</span>
+          <select name="blood_source">
+            <option value="">—</option>
+            <option value="lab" data-i18n="srcLab">Laboratoire</option>
+            <option value="booklet" data-i18n="srcBooklet">Carnet Santé</option>
+            <option value="self" data-i18n="srcSelf">Déclaré</option>
+          </select>
+        </label>
+      </div>
+      <label><span data-i18n="confirmedOn">Confirmé le</span>
+        <input name="blood_confirmed_on" type="date">
+      </label>
+      <label><span data-i18n="allergiesEdit">Allergies (une par ligne : nom | sévérité | détail)</span>
+        <textarea name="allergies" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="medsEdit">Médicaments (nom | dose | horaire)</span>
+        <textarea name="medications" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="condsEdit">Conditions (nom | depuis)</span>
+        <textarea name="conditions" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="hospitalsEdit">Hôpitaux (nom | ville | note)</span>
+        <textarea name="hospitals" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="professionalsEdit">Professionnels (nom | rôle | téléphone)</span>
+        <textarea name="professionals" rows="3"></textarea>
+      </label>
+      <div class="row">
+        <label><span data-i18n="emergencyName">Contact</span>
+          <input name="emergency_name" maxlength="80">
+        </label>
+        <label><span data-i18n="emergencyPhone">Téléphone</span>
+          <input name="emergency_phone" maxlength="32">
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="edit-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="save">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <p id="toast" class="toast hidden" role="status"></p>
+  <script src="js/copy.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/incidents.js"></script>
+  <script src="js/card.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Confdence">
+  <meta name="theme-color" content="#f3efe6">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Confdence</title>
+  <style>
+:root {
+  --bg: #f3efe6;
+  --ink: #1b1814;
+  --muted: #5c564c;
+  --line: #d4cdc0;
+  --card: #fffaf1;
+  --blood: #8f1d1d;
+  --blood-soft: #f3e4dc;
+  --ok: #2c4a3a;
+  --btn: #1b1814;
+  --btn-text: #fffaf1;
+  --warn: #6b3a1f;
+  --radius: 1rem;
+  --font: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --ui: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.shell {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 4rem;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.mark {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.top-actions { display: flex; gap: 0.5rem; }
+
+.kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 0.6rem;
+}
+
+h1 {
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  line-height: 1.15;
+  margin: 0 0 1rem;
+}
+
+h2 {
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 1.15rem;
+  margin: 0 0 0.6rem;
+}
+
+.lede, .body {
+  color: var(--ink);
+  margin: 0 0 1.25rem;
+  max-width: 38rem;
+}
+
+.fine {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 1rem 0 0;
+}
+
+.primary, .ghost, .lang, .text-btn {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.7rem 1.15rem;
+}
+
+.primary {
+  background: var(--btn);
+  color: var(--btn-text);
+  border: 0;
+}
+
+.ghost, .lang {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.text-btn {
+  background: none;
+  border: 0;
+  padding: 0.4rem 0.2rem;
+  color: var(--muted);
+}
+
+.hero-card, .panel, .dialog {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.hero-card {
+  padding: 1.5rem 1.4rem 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.blood {
+  font-family: var(--font);
+  font-size: clamp(4.2rem, 18vw, 6.5rem);
+  line-height: 0.95;
+  margin: 0.35rem 0 0.25rem;
+  color: var(--blood);
+  letter-spacing: -0.03em;
+}
+
+.blood-meta {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+}
+
+.warn {
+  margin: 0 0 1.1rem;
+  color: var(--warn);
+  font-size: 0.95rem;
+}
+
+.hero-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+
+.panel { padding: 1rem 1.1rem; }
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li { padding: 0.25rem 0; }
+
+.muted, .empty { color: var(--muted); }
+
+.holder {
+  margin: 1.25rem 0 0.75rem;
+  color: var(--muted);
+}
+
+.shares-panel { margin-top: 0.25rem; }
+
+.hidden { display: none !important; }
+
+.dialog {
+  width: min(36rem, calc(100vw - 1.5rem));
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+}
+
+.dialog::backdrop { background: rgb(27 24 20 / 0.35); }
+
+.dialog label {
+  display: block;
+  margin: 0.7rem 0;
+}
+
+.dialog label span {
+  display: block;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+input, select, textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.row {
+  display: grid;
+  gap: 0.6rem;
+}
+
+@media (min-width: 520px) {
+  .row { grid-template-columns: repeat(3, 1fr); }
+  .row.row-2, .row:last-of-type { grid-template-columns: 1fr 1fr; }
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.qr {
+  display: flex;
+  justify-content: center;
+  background: var(--blood-soft);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.qr svg { width: 12rem; height: 12rem; }
+
+.url {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+  color: var(--muted);
+}
+
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--card);
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+}
+
+.share-name {
+  font-family: var(--font);
+  font-size: 1.6rem;
+  margin: 0 0 1rem;
+}
+
+.share-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.sev-severe { color: var(--blood); }
+.sev-moderate { color: var(--warn); }
+
+.blood.is-empty { color: var(--muted); }
+
+.inc-open {
+  text-align: left;
+  width: 100%;
+  color: var(--ink);
+}
+
+.timeline {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  border-left: 1px solid var(--line);
+}
+
+.timeline-item {
+  padding: 0 0 1rem 1rem;
+  position: relative;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 0.45rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.timeline-item.kind-step::before { background: var(--blood); }
+.timeline-item.kind-notified::before { background: var(--ok); }
+
+.timeline-head {
+  margin: 0 0 0.2rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.inc-compose { margin-top: 1rem; }
+
+.hold {
+  min-height: 100vh;
+  padding: 1.25rem 1.25rem 6rem;
+}
+
+.hold-sheet {
+  max-width: 40rem;
+  margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.3rem;
+}
+
+.hold-grid {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1rem 0;
+}
+
+@media (min-width: 640px) {
+  .hold-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.hold-actions {
+  position: sticky;
+  bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+@media print {
+  @page { size: letter; margin: 12mm; }
+  html, body { background: #fff; }
+  .top, .hero-actions, .dialog, .toast, .no-print, #workspace, #incident-view { display: none !important; }
+  .hold { display: block !important; padding: 0; min-height: 0; }
+  .hold.hidden { display: block !important; }
+  .hold-sheet {
+    border: 0;
+    padding: 0;
+    max-width: none;
+  }
+}
+
+</style>
+</head>
+<body>
+  <div class="shell" id="workspace">
+    <header class="top">
+      <p class="mark" data-i18n="mark">Confdence</p>
+      <div class="top-actions">
+        <button type="button" class="lang" id="lang-toggle" aria-label="Language">EN</button>
+      </div>
+    </header>
+
+    <main id="app">
+      <section class="hero-card" aria-labelledby="blood-label">
+        <p class="eyebrow" id="blood-label" data-i18n="bloodType">Groupe sanguin</p>
+        <p class="blood is-empty" id="blood-type">—</p>
+        <p class="blood-meta" id="blood-meta"></p>
+        <p class="warn" data-i18n="transfusionNote">Un hôpital confirmera quand même votre groupe avant une transfusion. C’est normal.</p>
+        <div class="hero-actions">
+          <button type="button" class="primary" id="hold-btn" data-i18n="showDoctor">Montrer à un médecin</button>
+          <button type="button" class="ghost" id="edit-blood" data-i18n="edit">Modifier</button>
+          <button type="button" class="ghost" id="declare-btn" data-i18n="declareIncident">Déclarer un incident</button>
+        </div>
+      </section>
+
+      <section class="panel" id="incident-list-panel" aria-labelledby="inc-list-label">
+        <h2 id="inc-list-label" data-i18n="incidents">Incidents</h2>
+        <ul id="incident-list" class="list"></ul>
+      </section>
+
+      <section class="grid">
+        <article class="panel" aria-labelledby="all-label">
+          <h2 id="all-label" data-i18n="allergies">Allergies</h2>
+          <ul id="allergies" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="med-label">
+          <h2 id="med-label" data-i18n="medications">Médicaments</h2>
+          <ul id="medications" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="cond-label">
+          <h2 id="cond-label" data-i18n="conditions">Conditions</h2>
+          <ul id="conditions" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="em-label">
+          <h2 id="em-label" data-i18n="emergency">Urgence</h2>
+          <p id="emergency" class="body"></p>
+        </article>
+        <article class="panel" aria-labelledby="hosp-label">
+          <h2 id="hosp-label" data-i18n="hospitals">Hôpitaux</h2>
+          <ul id="hospitals" class="list"></ul>
+        </article>
+        <article class="panel" aria-labelledby="pro-label">
+          <h2 id="pro-label" data-i18n="professionals">Professionnels</h2>
+          <ul id="professionals" class="list"></ul>
+        </article>
+      </section>
+
+      <p class="holder"><span id="holder-name"></span> · <span data-i18n="youHold">vous détenez ce dossier</span></p>
+      <p class="fine" data-i18n="deviceNote">Vit sur cet appareil. Rien n’est envoyé.</p>
+    </main>
+  </div>
+
+  <section id="hold-card" class="hold hidden" aria-modal="true" role="dialog">
+    <div class="hold-sheet" id="hold-sheet">
+      <p class="kicker" data-i18n="mark">Confdence</p>
+      <p class="share-name" id="hold-name"></p>
+      <p class="eyebrow" data-i18n="bloodType">Groupe sanguin</p>
+      <p class="blood" id="hold-blood">—</p>
+      <p class="blood-meta" id="hold-meta"></p>
+      <p class="warn" data-i18n="transfusionNote">Un hôpital confirmera quand même votre groupe avant une transfusion. C’est normal.</p>
+      <div class="hold-grid">
+        <div>
+          <h2 data-i18n="allergies">Allergies</h2>
+          <ul id="hold-allergies" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="medications">Médicaments</h2>
+          <ul id="hold-medications" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="conditions">Conditions</h2>
+          <ul id="hold-conditions" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="emergency">Urgence</h2>
+          <p id="hold-emergency" class="body"></p>
+        </div>
+        <div>
+          <h2 data-i18n="hospitals">Hôpitaux</h2>
+          <ul id="hold-hospitals" class="list"></ul>
+        </div>
+        <div>
+          <h2 data-i18n="professionals">Professionnels</h2>
+          <ul id="hold-professionals" class="list"></ul>
+        </div>
+      </div>
+      <p class="fine" data-i18n="cardFooter">Le patient détient l’original. Carte hors ligne.</p>
+    </div>
+    <div class="hold-actions no-print">
+      <button type="button" class="primary" id="print-btn" data-i18n="printPdf">Imprimer / PDF</button>
+      <button type="button" class="ghost" id="save-card" data-i18n="saveCard">Enregistrer la carte</button>
+      <button type="button" class="text-btn" id="hold-done" data-i18n="done">Fermer</button>
+    </div>
+  </section>
+
+  <section id="incident-view" class="hold hidden" aria-modal="true" role="dialog">
+    <div class="hold-sheet">
+      <p class="kicker"><span data-i18n="incident">Incident</span> · <span id="inc-sev"></span></p>
+      <p class="share-name" id="inc-title"></p>
+      <p class="blood-meta" id="inc-commander"></p>
+      <p class="fine" id="inc-status-line"></p>
+      <ol id="inc-log" class="timeline"></ol>
+      <form id="inc-log-form" class="inc-compose no-print">
+        <label><span data-i18n="logEntry">Note ou étape</span>
+          <textarea name="text" rows="3" maxlength="500" required></textarea>
+        </label>
+        <div class="hero-actions">
+          <button type="submit" class="primary" name="as" value="note" data-i18n="addNote">Ajouter une note</button>
+          <button type="submit" class="ghost" name="as" value="step" data-i18n="addStep">Ajouter une étape</button>
+        </div>
+      </form>
+    </div>
+    <div class="hold-actions no-print">
+      <button type="button" class="primary" id="inc-notify" data-i18n="notifyCommander">Prévenir le commandant</button>
+      <button type="button" class="ghost" id="inc-monitor" data-i18n="statusMonitoring">Surveillance</button>
+      <button type="button" class="ghost" id="inc-resolve" data-i18n="statusResolved">Résoudre</button>
+      <button type="button" class="text-btn" id="inc-reopen" data-i18n="statusActive">Rouvrir</button>
+      <button type="button" class="text-btn" id="inc-back" data-i18n="done">Fermer</button>
+    </div>
+  </section>
+
+  <dialog id="declare-dialog" class="dialog">
+    <form id="declare-form" method="dialog">
+      <h2 data-i18n="declareTitle">Déclarer un incident</h2>
+      <p class="fine" data-i18n="declareHelp">Un commandant, un journal, des notes au fil de l’eau. Le message ne part pas tout seul.</p>
+      <label><span data-i18n="incidentTitle">Ce qui se passe</span>
+        <input name="title" maxlength="120" required>
+      </label>
+      <label><span data-i18n="severity">Sévérité</span>
+        <select name="severity">
+          <option value="sev1" data-i18n="sev1">SEV1 · critique</option>
+          <option value="sev2" data-i18n="sev2">SEV2 · élevé</option>
+          <option value="sev3" selected data-i18n="sev3">SEV3 · moyen</option>
+          <option value="sev4" data-i18n="sev4">SEV4 · bas</option>
+        </select>
+      </label>
+      <div class="row row-2">
+        <label><span data-i18n="commander">Commandant</span>
+          <input name="commander_name" maxlength="80">
+        </label>
+        <label><span data-i18n="commanderPhone">Téléphone</span>
+          <input name="commander_phone" maxlength="32">
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="declare-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="declare">Déclarer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="edit-dialog" class="dialog">
+    <form id="edit-form" method="dialog">
+      <h2 data-i18n="editTitle">Modifier le dossier</h2>
+      <label><span data-i18n="name">Nom</span>
+        <input name="display_name" maxlength="80" required>
+      </label>
+      <div class="row">
+        <label><span data-i18n="abo">ABO</span>
+          <select name="blood_abo">
+            <option value="">—</option>
+            <option>O</option><option>A</option><option>B</option><option>AB</option>
+          </select>
+        </label>
+        <label><span data-i18n="rh">Rh</span>
+          <select name="blood_rh">
+            <option value="">—</option>
+            <option value="+">+</option>
+            <option value="-">−</option>
+          </select>
+        </label>
+        <label><span data-i18n="source">Source</span>
+          <select name="blood_source">
+            <option value="">—</option>
+            <option value="lab" data-i18n="srcLab">Laboratoire</option>
+            <option value="booklet" data-i18n="srcBooklet">Carnet Santé</option>
+            <option value="self" data-i18n="srcSelf">Déclaré</option>
+          </select>
+        </label>
+      </div>
+      <label><span data-i18n="confirmedOn">Confirmé le</span>
+        <input name="blood_confirmed_on" type="date">
+      </label>
+      <label><span data-i18n="allergiesEdit">Allergies (une par ligne : nom | sévérité | détail)</span>
+        <textarea name="allergies" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="medsEdit">Médicaments (nom | dose | horaire)</span>
+        <textarea name="medications" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="condsEdit">Conditions (nom | depuis)</span>
+        <textarea name="conditions" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="hospitalsEdit">Hôpitaux (nom | ville | note)</span>
+        <textarea name="hospitals" rows="3"></textarea>
+      </label>
+      <label><span data-i18n="professionalsEdit">Professionnels (nom | rôle | téléphone)</span>
+        <textarea name="professionals" rows="3"></textarea>
+      </label>
+      <div class="row">
+        <label><span data-i18n="emergencyName">Contact</span>
+          <input name="emergency_name" maxlength="80">
+        </label>
+        <label><span data-i18n="emergencyPhone">Téléphone</span>
+          <input name="emergency_phone" maxlength="32">
+        </label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="edit-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="save">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <p id="toast" class="toast hidden" role="status"></p>
+<script>
+window.HEALTH_COPY = {
+  fr: {
+    mark: "Confdence",
+    bloodType: "Groupe sanguin",
+    transfusionNote:
+      "Un hôpital confirmera quand même votre groupe avant une transfusion. C’est normal.",
+    showDoctor: "Montrer à un médecin",
+    edit: "Modifier",
+    allergies: "Allergies",
+    medications: "Médicaments",
+    conditions: "Conditions",
+    emergency: "Urgence",
+    hospitals: "Hôpitaux",
+    professionals: "Professionnels",
+    hospitalsEdit: "Hôpitaux (nom | ville | note)",
+    professionalsEdit: "Professionnels (nom | rôle | téléphone)",
+    youHold: "vous détenez ce dossier",
+    deviceNote: "Vit sur cet appareil. Rien n’est envoyé.",
+    none: "Aucun",
+    editTitle: "Modifier le dossier",
+    name: "Nom",
+    abo: "ABO",
+    rh: "Rh",
+    source: "Source",
+    srcLab: "Laboratoire",
+    srcBooklet: "Carnet Santé",
+    srcSelf: "Déclaré",
+    confirmedOn: "Confirmé le",
+    allergiesEdit: "Allergies (une par ligne : nom | sévérité | détail)",
+    medsEdit: "Médicaments (nom | dose | horaire)",
+    condsEdit: "Conditions (nom | depuis)",
+    emergencyName: "Contact",
+    emergencyPhone: "Téléphone",
+    cancel: "Annuler",
+    save: "Enregistrer",
+    done: "Fermer",
+    saved: "Enregistré",
+    addBloodHint: "Pas encore inscrit. Ajoutez-le — c’est le fait qui manque toujours.",
+    incompleteBlood: "ABO et Rh vont ensemble.",
+    needSource: "Dites d’où vient le groupe (labo, carnet, ou vous).",
+    printPdf: "Imprimer / PDF",
+    saveCard: "Enregistrer la carte",
+    cardSaved: "Carte enregistrée",
+    shared: "Carte prête à envoyer",
+    cardFooter: "Le patient détient l’original. Carte hors ligne.",
+    sourceLab: "laboratoire",
+    sourceBooklet: "Carnet Santé",
+    sourceSelf: "déclaré par vous",
+    sev: { mild: "légère", moderate: "modérée", severe: "sévère" },
+    incidents: "Incidents",
+    incident: "Incident",
+    declareIncident: "Déclarer un incident",
+    declareTitle: "Déclarer un incident",
+    declareHelp: "Un commandant, un journal, des notes au fil de l’eau. Le message ne part pas tout seul.",
+    declare: "Déclarer",
+    incidentTitle: "Ce qui se passe",
+    severity: "Sévérité",
+    sev1: "SEV1 · critique",
+    sev2: "SEV2 · élevé",
+    sev3: "SEV3 · moyen",
+    sev4: "SEV4 · bas",
+    commander: "Commandant",
+    commanderPhone: "Téléphone",
+    notifyCommander: "Prévenir le commandant",
+    addNote: "Ajouter une note",
+    addStep: "Ajouter une étape",
+    logEntry: "Note ou étape",
+    statusMonitoring: "Surveillance",
+    statusResolved: "Résoudre",
+    statusActive: "Rouvrir",
+    noIncidents: "Aucun incident ouvert.",
+    commanderNone: "Pas de commandant",
+    commanderLine: "Commandant · {name}",
+    notifiedAt: "prévenu",
+    statusLine: "{status} · déclaré {when}",
+    statusActiveLabel: "actif",
+    statusMonitoringLabel: "surveillance",
+    statusResolvedLabel: "résolu",
+    kindDeclared: "déclaré",
+    kindNote: "note",
+    kindStep: "étape",
+    kindStatus: "statut",
+    kindNotified: "avis envoyé",
+    kindCommander: "commandant",
+    needTitle: "Dites ce qui se passe.",
+    needLog: "Écrivez la note ou l’étape.",
+    needCommanderPhone: "Ajoutez un téléphone au commandant pour prévenir.",
+    notifyOpened: "Messages ouvert — envoyez pour prévenir.",
+    notifyCopied: "Texte copié. Collez-le dans un message.",
+    notifyBody: "Confdence {sev} — {title}. {name}. Commandant : {commander}.",
+  },
+  en: {
+    mark: "Confdence",
+    bloodType: "Blood type",
+    transfusionNote:
+      "A hospital will still confirm your type before a transfusion. That’s correct.",
+    showDoctor: "Show a doctor",
+    edit: "Edit",
+    allergies: "Allergies",
+    medications: "Medications",
+    conditions: "Conditions",
+    emergency: "Emergency",
+    hospitals: "Hospitals",
+    professionals: "Clinicians",
+    hospitalsEdit: "Hospitals (name | city | note)",
+    professionalsEdit: "Clinicians (name | role | phone)",
+    youHold: "you hold this record",
+    deviceNote: "Lives on this device. Nothing is sent.",
+    none: "None",
+    editTitle: "Edit record",
+    name: "Name",
+    abo: "ABO",
+    rh: "Rh",
+    source: "Source",
+    srcLab: "Lab",
+    srcBooklet: "Health Booklet",
+    srcSelf: "Self-reported",
+    confirmedOn: "Confirmed on",
+    allergiesEdit: "Allergies (one per line: name | severity | detail)",
+    medsEdit: "Medications (name | dose | schedule)",
+    condsEdit: "Conditions (name | since)",
+    emergencyName: "Contact",
+    emergencyPhone: "Phone",
+    cancel: "Cancel",
+    save: "Save",
+    done: "Done",
+    saved: "Saved",
+    addBloodHint: "Not on the card yet. Add it — that’s the fact that keeps going missing.",
+    incompleteBlood: "ABO and Rh go together.",
+    needSource: "Say where the type came from (lab, booklet, or you).",
+    printPdf: "Print / PDF",
+    saveCard: "Save card",
+    cardSaved: "Card saved",
+    shared: "Card ready to send",
+    cardFooter: "The patient holds the original. Offline card.",
+    sourceLab: "lab",
+    sourceBooklet: "Health Booklet",
+    sourceSelf: "self-reported",
+    sev: { mild: "mild", moderate: "moderate", severe: "severe" },
+    incidents: "Incidents",
+    incident: "Incident",
+    declareIncident: "Declare an incident",
+    declareTitle: "Declare an incident",
+    declareHelp: "A commander, a log, notes as you go. The message does not send itself.",
+    declare: "Declare",
+    incidentTitle: "What is happening",
+    severity: "Severity",
+    sev1: "SEV1 · critical",
+    sev2: "SEV2 · high",
+    sev3: "SEV3 · medium",
+    sev4: "SEV4 · low",
+    commander: "Commander",
+    commanderPhone: "Phone",
+    notifyCommander: "Notify commander",
+    addNote: "Add a note",
+    addStep: "Add a step",
+    logEntry: "Note or step",
+    statusMonitoring: "Monitoring",
+    statusResolved: "Resolve",
+    statusActive: "Reopen",
+    noIncidents: "No open incidents.",
+    commanderNone: "No commander",
+    commanderLine: "Commander · {name}",
+    notifiedAt: "notified",
+    statusLine: "{status} · declared {when}",
+    statusActiveLabel: "active",
+    statusMonitoringLabel: "monitoring",
+    statusResolvedLabel: "resolved",
+    kindDeclared: "declared",
+    kindNote: "note",
+    kindStep: "step",
+    kindStatus: "status",
+    kindNotified: "notified",
+    kindCommander: "commander",
+    needTitle: "Say what is happening.",
+    needLog: "Write the note or step.",
+    needCommanderPhone: "Add a phone number for the commander to notify.",
+    notifyOpened: "Messages opened — send it to notify.",
+    notifyCopied: "Text copied. Paste it into a message.",
+    notifyBody: "Confdence {sev} — {title}. {name}. Commander: {commander}.",
+  },
+};
+
+window.ConfdenceStore = (() => {
+  const KEY = "confdence.record.v1";
+  const DEFAULT = {
+    display_name: "Alexander Pawinski",
+    preferred_lang: "fr",
+    blood_abo: null,
+    blood_rh: null,
+    blood_source: null,
+    blood_confirmed_on: null,
+    allergies: [],
+    medications: [],
+    conditions: [],
+    hospitals: [],
+    professionals: [],
+    emergency_name: null,
+    emergency_phone: null,
+    updated_at: null,
+  };
+
+  function normalize(raw) {
+    const r = Object.assign({}, DEFAULT, raw || {});
+    r.allergies = Array.isArray(r.allergies) ? r.allergies : [];
+    r.medications = Array.isArray(r.medications) ? r.medications : [];
+    r.conditions = Array.isArray(r.conditions) ? r.conditions : [];
+    r.hospitals = Array.isArray(r.hospitals) ? r.hospitals : [];
+    r.professionals = Array.isArray(r.professionals) ? r.professionals : [];
+    r.blood_type = r.blood_abo && r.blood_rh ? r.blood_abo + r.blood_rh : null;
+    return r;
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      return normalize(raw ? JSON.parse(raw) : null);
+    } catch (err) {
+      return normalize(null);
+    }
+  }
+
+  function save(record) {
+    const next = normalize(record);
+    next.updated_at = new Date().toISOString();
+    localStorage.setItem(KEY, JSON.stringify(next));
+    return next;
+  }
+
+  return { KEY, DEFAULT, normalize, load, save };
+})();
+
+window.ConfdenceIncidents = (() => {
+  const KEY = "confdence.incidents.v1";
+  const SEVERITIES = ["sev1", "sev2", "sev3", "sev4"];
+  const STATUSES = ["active", "monitoring", "resolved"];
+  const EVENT_KINDS = ["declared", "note", "step", "status", "notified", "commander"];
+
+  function nowIso() {
+    return new Date().toISOString();
+  }
+
+  function nid(prefix) {
+    return (
+      prefix +
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 8)
+    );
+  }
+
+  function event(kind, text, extra) {
+    if (EVENT_KINDS.indexOf(kind) === -1) throw new Error("invalid event");
+    const row = {
+      id: nid("evt_"),
+      at: nowIso(),
+      kind: kind,
+      text: String(text || "").trim().slice(0, 500),
+    };
+    if (extra && extra.status) row.status = extra.status;
+    return row;
+  }
+
+  function normalizeOne(raw) {
+    const inc = raw && typeof raw === "object" ? raw : {};
+    const severity = SEVERITIES.indexOf(inc.severity) === -1 ? "sev3" : inc.severity;
+    const status = STATUSES.indexOf(inc.status) === -1 ? "active" : inc.status;
+    const events = Array.isArray(inc.events) ? inc.events : [];
+    return {
+      id: inc.id || nid("inc_"),
+      title: String(inc.title || "").trim().slice(0, 120),
+      severity: severity,
+      status: status,
+      commander_name: inc.commander_name ? String(inc.commander_name).slice(0, 80) : "",
+      commander_phone: inc.commander_phone ? String(inc.commander_phone).slice(0, 32) : "",
+      commander_notified_at: inc.commander_notified_at || null,
+      created_at: inc.created_at || nowIso(),
+      resolved_at: inc.resolved_at || null,
+      events: events.filter((row) => row && row.id && row.kind),
+    };
+  }
+
+  function loadAll() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list.map(normalizeOne) : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function saveAll(list) {
+    localStorage.setItem(KEY, JSON.stringify(list.map(normalizeOne)));
+    return loadAll();
+  }
+
+  function declareIncident(input) {
+    const title = String((input && input.title) || "").trim();
+    if (!title) throw new Error("title required");
+    const inc = normalizeOne({
+      title: title,
+      severity: (input && input.severity) || "sev3",
+      status: "active",
+      commander_name: (input && input.commander_name) || "",
+      commander_phone: (input && input.commander_phone) || "",
+      events: [],
+    });
+    inc.events.push(
+      event(
+        "declared",
+        title +
+          (inc.commander_name ? " · commandant " + inc.commander_name : "")
+      )
+    );
+    const list = loadAll();
+    list.unshift(inc);
+    saveAll(list);
+    return inc;
+  }
+
+  function get(id) {
+    return loadAll().filter((inc) => inc.id === id)[0] || null;
+  }
+
+  function update(id, fn) {
+    const list = loadAll();
+    const idx = list.findIndex((inc) => inc.id === id);
+    if (idx === -1) throw new Error("not found");
+    const next = fn(list[idx]);
+    list[idx] = normalizeOne(next);
+    saveAll(list);
+    return list[idx];
+  }
+
+  function addNote(id, text) {
+    const trimmed = String(text || "").trim();
+    if (!trimmed) throw new Error("empty");
+    return update(id, (inc) => {
+      inc.events.push(event("note", trimmed));
+      return inc;
+    });
+  }
+
+  function addStep(id, text) {
+    const trimmed = String(text || "").trim();
+    if (!trimmed) throw new Error("empty");
+    return update(id, (inc) => {
+      inc.events.push(event("step", trimmed));
+      return inc;
+    });
+  }
+
+  function setStatus(id, status) {
+    if (STATUSES.indexOf(status) === -1) throw new Error("invalid status");
+    return update(id, (inc) => {
+      inc.status = status;
+      inc.resolved_at = status === "resolved" ? nowIso() : null;
+      inc.events.push(event("status", status, { status: status }));
+      return inc;
+    });
+  }
+
+  function setCommander(id, name, phone) {
+    return update(id, (inc) => {
+      inc.commander_name = name || "";
+      inc.commander_phone = phone || "";
+      inc.events.push(
+        event("commander", (name || "") + (phone ? " · " + phone : ""))
+      );
+      return inc;
+    });
+  }
+
+  function digits(phone) {
+    const s = String(phone || "").trim();
+    const plus = s.charAt(0) === "+";
+    const nums = s.replace(/\D/g, "");
+    if (!nums) return "";
+    return plus ? "+" + nums : nums;
+  }
+
+  function notifyBody(incident, patientName, copy) {
+    const pack = copy || {};
+    const template = pack.notifyBody || "{sev} {title} {name} {commander}";
+    return template
+      .replace("{sev}", String(incident.severity || "").toUpperCase())
+      .replace("{title}", incident.title || "")
+      .replace("{name}", patientName || "")
+      .replace("{commander}", incident.commander_name || "");
+  }
+
+  function smsHref(phone, body) {
+    const d = digits(phone);
+    if (!d) return null;
+    return "sms:" + encodeURIComponent(d) + "?&body=" + encodeURIComponent(body);
+  }
+
+  function markNotified(id) {
+    return update(id, (inc) => {
+      inc.commander_notified_at = nowIso();
+      inc.events.push(event("notified", inc.commander_name || inc.commander_phone || ""));
+      return inc;
+    });
+  }
+
+  function openIncidents() {
+    return loadAll().filter((inc) => inc.status !== "resolved");
+  }
+
+  return {
+    KEY,
+    SEVERITIES,
+    STATUSES,
+    loadAll,
+    get,
+    declareIncident,
+    addNote,
+    addStep,
+    setStatus,
+    setCommander,
+    digits,
+    notifyBody,
+    smsHref,
+    markNotified,
+    openIncidents,
+  };
+})();
+
+window.ConfdenceCard = (() => {
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function sourceLabel(source, copy) {
+    if (source === "lab") return copy.sourceLab;
+    if (source === "booklet") return copy.sourceBooklet;
+    if (source === "self") return copy.sourceSelf;
+    return "";
+  }
+
+  function listHtml(items, line, empty) {
+    if (!items || !items.length) {
+      return "<li class=\"empty\">" + escapeHtml(empty) + "</li>";
+    }
+    return items.map((item) => "<li>" + line(item) + "</li>").join("");
+  }
+
+  function build(record, copy) {
+    const r = record || {};
+    const sev = copy.sev || {};
+    const meta = [sourceLabel(r.blood_source, copy), r.blood_confirmed_on]
+      .filter(Boolean)
+      .join(" · ");
+    const allergies = listHtml(
+      r.allergies,
+      (item) =>
+        "<strong>" +
+        escapeHtml(item.name) +
+        "</strong> · " +
+        escapeHtml(sev[item.severity] || item.severity) +
+        (item.detail ? " — " + escapeHtml(item.detail) : ""),
+      copy.none
+    );
+    const meds = listHtml(
+      r.medications,
+      (item) =>
+        "<strong>" +
+        escapeHtml(item.name) +
+        "</strong>" +
+        (item.dose ? " · " + escapeHtml(item.dose) : "") +
+        (item.schedule ? " · " + escapeHtml(item.schedule) : ""),
+      copy.none
+    );
+    const conds = listHtml(
+      r.conditions,
+      (item) =>
+        "<strong>" +
+        escapeHtml(item.name) +
+        "</strong>" +
+        (item.since ? " · " + escapeHtml(item.since) : ""),
+      copy.none
+    );
+    const emergency =
+      [r.emergency_name, r.emergency_phone].filter(Boolean).join(" · ") || copy.none;
+    const hospitals = listHtml(
+      r.hospitals,
+      (item) =>
+        "<strong>" +
+        escapeHtml(item.name) +
+        "</strong>" +
+        (item.city ? " · " + escapeHtml(item.city) : "") +
+        (item.note ? " · " + escapeHtml(item.note) : ""),
+      copy.none
+    );
+    const professionals = listHtml(
+      r.professionals,
+      (item) =>
+        "<strong>" +
+        escapeHtml(item.name) +
+        "</strong>" +
+        (item.role ? " · " + escapeHtml(item.role) : "") +
+        (item.phone ? " · " + escapeHtml(item.phone) : ""),
+      copy.none
+    );
+
+    return `<!DOCTYPE html>
+<html lang="${escapeHtml(r.preferred_lang || "fr")}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confdence</title>
+<style>
+  :root { --bg:#f3efe6; --ink:#1b1814; --muted:#5c564c; --line:#d4cdc0; --card:#fffaf1; --blood:#8f1d1d; --warn:#6b3a1f; --font:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; --ui:"Avenir Next","Segoe UI",system-ui,sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--ui); }
+  .sheet { max-width:40rem; margin:0 auto; padding:1.25rem; }
+  .kicker { letter-spacing:.14em; text-transform:uppercase; font-size:.8rem; color:var(--muted); }
+  .name { font-family:var(--font); font-size:1.6rem; margin:.2rem 0 1rem; }
+  .eyebrow { color:var(--muted); letter-spacing:.08em; text-transform:uppercase; font-size:.78rem; margin:0; }
+  .blood { font-family:var(--font); font-size:clamp(4rem,18vw,6.5rem); line-height:.95; color:var(--blood); margin:.2rem 0; }
+  .meta, .fine { color:var(--muted); }
+  .warn { color:var(--warn); }
+  .grid { display:grid; gap:.8rem; margin:1rem 0; }
+  @media (min-width:640px) { .grid { grid-template-columns:1fr 1fr; } }
+  h2 { font-family:var(--font); font-weight:500; font-size:1.1rem; margin:0 0 .4rem; }
+  ul { list-style:none; margin:0; padding:0; }
+  .empty { color:var(--muted); }
+  @media print {
+    @page { size: letter; margin: 12mm; }
+    html, body { background: white; }
+    .sheet { padding: 0; }
+  }
+</style>
+</head>
+<body>
+  <article class="sheet">
+    <p class="kicker">Confdence</p>
+    <p class="name">${escapeHtml(r.display_name || "")}</p>
+    <p class="eyebrow">${escapeHtml(copy.bloodType)}</p>
+    <p class="blood">${escapeHtml(r.blood_type || "—")}</p>
+    <p class="meta">${escapeHtml(meta)}</p>
+    <p class="warn">${escapeHtml(copy.transfusionNote)}</p>
+    <div class="grid">
+      <section><h2>${escapeHtml(copy.allergies)}</h2><ul>${allergies}</ul></section>
+      <section><h2>${escapeHtml(copy.medications)}</h2><ul>${meds}</ul></section>
+      <section><h2>${escapeHtml(copy.conditions)}</h2><ul>${conds}</ul></section>
+      <section><h2>${escapeHtml(copy.emergency)}</h2><p>${escapeHtml(emergency)}</p></section>
+      <section><h2>${escapeHtml(copy.hospitals)}</h2><ul>${hospitals}</ul></section>
+      <section><h2>${escapeHtml(copy.professionals)}</h2><ul>${professionals}</ul></section>
+    </div>
+    <p class="fine">${escapeHtml(copy.cardFooter)}</p>
+  </article>
+</body>
+</html>`;
+  }
+
+  function filename(record) {
+    const slug = String(record && record.display_name ? record.display_name : "card")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    return "confdence-" + (slug || "card") + ".html";
+  }
+
+  async function shareOrDownload(record, copy) {
+    const html = build(record, copy);
+    const name = filename(record);
+    const file = new File([html], name, { type: "text/html" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: "Confdence" });
+      return "shared";
+    }
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+    return "downloaded";
+  }
+
+  return { escapeHtml, sourceLabel, build, filename, shareOrDownload };
+})();
+
+(() => {
+  const COPY = window.HEALTH_COPY;
+  const store = window.ConfdenceStore;
+  const card = window.ConfdenceCard;
+  const incidents = window.ConfdenceIncidents;
+  const state = {
+    lang: localStorage.getItem("health.lang") || "fr",
+    record: store.load(),
+    incidentId: null,
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  function t(key) {
+    const pack = COPY[state.lang] || COPY.fr;
+    return pack[key] || COPY.fr[key] || key;
+  }
+
+  function copyPack() {
+    return COPY[state.lang] || COPY.fr;
+  }
+
+  function applyLang() {
+    document.documentElement.lang = state.lang;
+    document.title = t("mark");
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (key) el.textContent = t(key);
+    });
+    $("lang-toggle").textContent = state.lang === "fr" ? "EN" : "FR";
+    renderIncidentList();
+    if (state.incidentId) renderIncident();
+  }
+
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.add("hidden"), 2200);
+  }
+
+  function renderList(id, items, line) {
+    const ul = $(id);
+    ul.innerHTML = "";
+    if (!items || !items.length) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = t("none");
+      ul.appendChild(li);
+      return;
+    }
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      li.appendChild(line(item));
+      ul.appendChild(li);
+    });
+  }
+
+  function allergyLine(item) {
+    const wrap = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = item.name;
+    wrap.appendChild(strong);
+    const sev = document.createElement("span");
+    sev.className = "sev-" + item.severity;
+    const labels = t("sev") || {};
+    sev.textContent = " · " + (labels[item.severity] || item.severity);
+    wrap.appendChild(sev);
+    if (item.detail) wrap.appendChild(document.createTextNode(" — " + item.detail));
+    return wrap;
+  }
+
+  function medLine(item) {
+    const wrap = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = item.name;
+    wrap.appendChild(strong);
+    const extra = [item.dose, item.schedule].filter(Boolean).join(" · ");
+    if (extra) wrap.appendChild(document.createTextNode(" · " + extra));
+    return wrap;
+  }
+
+  function condLine(item) {
+    const wrap = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = item.name;
+    wrap.appendChild(strong);
+    if (item.since) wrap.appendChild(document.createTextNode(" · " + item.since));
+    return wrap;
+  }
+
+  function hospitalLine(item) {
+    const wrap = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = item.name;
+    wrap.appendChild(strong);
+    const extra = [item.city, item.note].filter(Boolean).join(" · ");
+    if (extra) wrap.appendChild(document.createTextNode(" · " + extra));
+    return wrap;
+  }
+
+  function proLine(item) {
+    const wrap = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = item.name;
+    wrap.appendChild(strong);
+    const extra = [item.role, item.phone].filter(Boolean).join(" · ");
+    if (extra) wrap.appendChild(document.createTextNode(" · " + extra));
+    return wrap;
+  }
+
+  function metaText(r) {
+    const bits = [];
+    if (r.blood_source) bits.push(card.sourceLabel(r.blood_source, copyPack()));
+    if (r.blood_confirmed_on) bits.push(r.blood_confirmed_on);
+    return bits.join(" · ");
+  }
+
+  function renderRecord() {
+    const r = state.record;
+    $("blood-type").textContent = r.blood_type || "—";
+    $("blood-type").classList.toggle("is-empty", !r.blood_type);
+    $("blood-meta").textContent = r.blood_type
+      ? metaText(r)
+      : t("addBloodHint");
+    $("holder-name").textContent = r.display_name;
+    renderList("allergies", r.allergies, allergyLine);
+    renderList("medications", r.medications, medLine);
+    renderList("conditions", r.conditions, condLine);
+    renderList("hospitals", r.hospitals, hospitalLine);
+    renderList("professionals", r.professionals, proLine);
+    $("emergency").textContent =
+      [r.emergency_name, r.emergency_phone].filter(Boolean).join(" · ") || t("none");
+    renderIncidentList();
+  }
+
+  function when(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString(state.lang === "fr" ? "fr-CA" : "en-CA", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function statusLabel(status) {
+    if (status === "monitoring") return t("statusMonitoringLabel");
+    if (status === "resolved") return t("statusResolvedLabel");
+    return t("statusActiveLabel");
+  }
+
+  function kindLabel(kind) {
+    const map = {
+      declared: t("kindDeclared"),
+      note: t("kindNote"),
+      step: t("kindStep"),
+      status: t("kindStatus"),
+      notified: t("kindNotified"),
+      commander: t("kindCommander"),
+    };
+    return map[kind] || kind;
+  }
+
+  function renderIncidentList() {
+    const ul = $("incident-list");
+    if (!ul) return;
+    ul.innerHTML = "";
+    const list = incidents.loadAll();
+    if (!list.length) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = t("noIncidents");
+      ul.appendChild(li);
+      return;
+    }
+    list.forEach((inc) => {
+      const li = document.createElement("li");
+      li.className = "share-item";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "text-btn inc-open";
+      btn.textContent =
+        inc.severity.toUpperCase() +
+        " · " +
+        inc.title +
+        " · " +
+        statusLabel(inc.status);
+      btn.addEventListener("click", () => openIncident(inc.id));
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+  }
+
+  function renderIncident() {
+    const inc = incidents.get(state.incidentId);
+    if (!inc) {
+      closeIncident();
+      return;
+    }
+    $("inc-sev").textContent = t(inc.severity);
+    $("inc-title").textContent = inc.title;
+    $("inc-commander").textContent = inc.commander_name
+      ? t("commanderLine").replace("{name}", inc.commander_name) +
+        (inc.commander_notified_at ? " · " + t("notifiedAt") : "")
+      : t("commanderNone");
+    $("inc-status-line").textContent = t("statusLine")
+      .replace("{status}", statusLabel(inc.status))
+      .replace("{when}", when(inc.created_at));
+    const log = $("inc-log");
+    log.innerHTML = "";
+    inc.events.forEach((row) => {
+      const li = document.createElement("li");
+      li.className = "timeline-item kind-" + row.kind;
+      const head = document.createElement("p");
+      head.className = "timeline-head";
+      head.textContent = kindLabel(row.kind) + " · " + when(row.at);
+      const body = document.createElement("p");
+      body.className = "body";
+      body.textContent = row.kind === "status" ? statusLabel(row.status || row.text) : row.text;
+      li.appendChild(head);
+      li.appendChild(body);
+      log.appendChild(li);
+    });
+    $("inc-resolve").classList.toggle("hidden", inc.status === "resolved");
+    $("inc-monitor").classList.toggle("hidden", inc.status !== "active");
+    $("inc-reopen").classList.toggle("hidden", inc.status !== "resolved");
+  }
+
+  function renderHold() {
+    const r = state.record;
+    $("hold-name").textContent = r.display_name;
+    $("hold-blood").textContent = r.blood_type || "—";
+    $("hold-blood").classList.toggle("is-empty", !r.blood_type);
+    $("hold-meta").textContent = metaText(r);
+    renderList("hold-allergies", r.allergies, allergyLine);
+    renderList("hold-medications", r.medications, medLine);
+    renderList("hold-conditions", r.conditions, condLine);
+    renderList("hold-hospitals", r.hospitals, hospitalLine);
+    renderList("hold-professionals", r.professionals, proLine);
+    $("hold-emergency").textContent =
+      [r.emergency_name, r.emergency_phone].filter(Boolean).join(" · ") || t("none");
+  }
+
+  function lines(text) {
+    return text
+      .split("\n")
+      .map((row) => row.trim())
+      .filter(Boolean)
+      .map((row) => row.split("|").map((part) => part.trim()));
+  }
+
+  function fillForm() {
+    const r = state.record;
+    const form = $("edit-form");
+    form.display_name.value = r.display_name || "";
+    form.blood_abo.value = r.blood_abo || "";
+    form.blood_rh.value = r.blood_rh || "";
+    form.blood_source.value = r.blood_source || "";
+    form.blood_confirmed_on.value = r.blood_confirmed_on || "";
+    form.allergies.value = (r.allergies || [])
+      .map((a) => [a.name, a.severity, a.detail].filter(Boolean).join(" | "))
+      .join("\n");
+    form.medications.value = (r.medications || [])
+      .map((m) => [m.name, m.dose, m.schedule].filter(Boolean).join(" | "))
+      .join("\n");
+    form.conditions.value = (r.conditions || [])
+      .map((c) => [c.name, c.since].filter(Boolean).join(" | "))
+      .join("\n");
+    form.hospitals.value = (r.hospitals || [])
+      .map((h) => [h.name, h.city, h.note].filter(Boolean).join(" | "))
+      .join("\n");
+    form.professionals.value = (r.professionals || [])
+      .map((p) => [p.name, p.role, p.phone].filter(Boolean).join(" | "))
+      .join("\n");
+    form.emergency_name.value = r.emergency_name || "";
+    form.emergency_phone.value = r.emergency_phone || "";
+  }
+
+  function saveRecord(event) {
+    event.preventDefault();
+    const form = $("edit-form");
+    const abo = form.blood_abo.value || null;
+    const rh = form.blood_rh.value || null;
+    if (Boolean(abo) !== Boolean(rh)) {
+      toast(t("incompleteBlood"));
+      return;
+    }
+    if (abo && !form.blood_source.value) {
+      toast(t("needSource"));
+      return;
+    }
+    state.record = store.save({
+      display_name: form.display_name.value,
+      preferred_lang: state.lang,
+      blood_abo: abo,
+      blood_rh: rh,
+      blood_source: form.blood_source.value || null,
+      blood_confirmed_on: form.blood_confirmed_on.value || null,
+      allergies: lines(form.allergies.value).map((parts) => ({
+        name: parts[0],
+        severity: parts[1] || "moderate",
+        detail: parts[2] || "",
+      })),
+      medications: lines(form.medications.value).map((parts) => ({
+        name: parts[0],
+        dose: parts[1] || "",
+        schedule: parts[2] || "",
+      })),
+      conditions: lines(form.conditions.value).map((parts) => ({
+        name: parts[0],
+        since: parts[1] || "",
+      })),
+      hospitals: lines(form.hospitals.value).map((parts) => ({
+        name: parts[0],
+        city: parts[1] || "",
+        note: parts[2] || "",
+      })),
+      professionals: lines(form.professionals.value).map((parts) => ({
+        name: parts[0],
+        role: parts[1] || "",
+        phone: parts[2] || "",
+      })),
+      emergency_name: form.emergency_name.value || null,
+      emergency_phone: form.emergency_phone.value || null,
+    });
+    renderRecord();
+    $("edit-dialog").close();
+    toast(t("saved"));
+  }
+
+  function openHold() {
+    renderHold();
+    $("hold-card").classList.remove("hidden");
+    $("workspace").classList.add("hidden");
+  }
+
+  function closeHold() {
+    $("hold-card").classList.add("hidden");
+    $("workspace").classList.remove("hidden");
+  }
+
+  function openIncident(id) {
+    state.incidentId = id;
+    $("hold-card").classList.add("hidden");
+    $("workspace").classList.add("hidden");
+    $("incident-view").classList.remove("hidden");
+    renderIncident();
+  }
+
+  function closeIncident() {
+    state.incidentId = null;
+    $("incident-view").classList.add("hidden");
+    $("workspace").classList.remove("hidden");
+    renderIncidentList();
+  }
+
+  function openDeclare() {
+    const form = $("declare-form");
+    form.title.value = "";
+    form.severity.value = "sev3";
+    form.commander_name.value = state.record.emergency_name || "";
+    form.commander_phone.value = state.record.emergency_phone || "";
+    $("declare-dialog").showModal();
+  }
+
+  function declareIncident(event) {
+    event.preventDefault();
+    const form = $("declare-form");
+    const title = form.title.value.trim();
+    if (!title) {
+      toast(t("needTitle"));
+      return;
+    }
+    const inc = incidents.declareIncident({
+      title: title,
+      severity: form.severity.value,
+      commander_name: form.commander_name.value,
+      commander_phone: form.commander_phone.value,
+    });
+    $("declare-dialog").close();
+    openIncident(inc.id);
+  }
+
+  function appendLog(event) {
+    event.preventDefault();
+    if (!state.incidentId) return;
+    const form = $("inc-log-form");
+    const text = form.text.value.trim();
+    if (!text) {
+      toast(t("needLog"));
+      return;
+    }
+    const as = (event.submitter && event.submitter.value) || "note";
+    try {
+      if (as === "step") incidents.addStep(state.incidentId, text);
+      else incidents.addNote(state.incidentId, text);
+    } catch (err) {
+      toast(t("needLog"));
+      return;
+    }
+    form.reset();
+    renderIncident();
+  }
+
+  function notifyCommander() {
+    const inc = incidents.get(state.incidentId);
+    if (!inc) return;
+    const body = incidents.notifyBody(inc, state.record.display_name, copyPack());
+    const href = incidents.smsHref(inc.commander_phone, body);
+    if (href) {
+      incidents.markNotified(inc.id);
+      window.location.href = href;
+      toast(t("notifyOpened"));
+    } else {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(body).then(() => toast(t("notifyCopied")));
+      } else {
+        toast(t("needCommanderPhone"));
+      }
+    }
+    renderIncident();
+  }
+
+  function bind() {
+    $("lang-toggle").addEventListener("click", () => {
+      state.lang = state.lang === "fr" ? "en" : "fr";
+      localStorage.setItem("health.lang", state.lang);
+      state.record.preferred_lang = state.lang;
+      store.save(state.record);
+      applyLang();
+      renderRecord();
+      if (!$("hold-card").classList.contains("hidden")) renderHold();
+      if (state.incidentId) renderIncident();
+    });
+    $("declare-btn").addEventListener("click", openDeclare);
+    $("declare-cancel").addEventListener("click", () => $("declare-dialog").close());
+    $("declare-form").addEventListener("submit", declareIncident);
+    $("inc-log-form").addEventListener("submit", appendLog);
+    $("inc-notify").addEventListener("click", notifyCommander);
+    $("inc-monitor").addEventListener("click", () => {
+      incidents.setStatus(state.incidentId, "monitoring");
+      renderIncident();
+    });
+    $("inc-resolve").addEventListener("click", () => {
+      incidents.setStatus(state.incidentId, "resolved");
+      renderIncident();
+    });
+    $("inc-reopen").addEventListener("click", () => {
+      incidents.setStatus(state.incidentId, "active");
+      renderIncident();
+    });
+    $("inc-back").addEventListener("click", closeIncident);
+    $("edit-blood").addEventListener("click", () => {
+      fillForm();
+      $("edit-dialog").showModal();
+    });
+    $("edit-cancel").addEventListener("click", () => $("edit-dialog").close());
+    $("edit-form").addEventListener("submit", saveRecord);
+    $("hold-btn").addEventListener("click", openHold);
+    $("hold-done").addEventListener("click", closeHold);
+    $("print-btn").addEventListener("click", () => window.print());
+    $("save-card").addEventListener("click", () => {
+      card.shareOrDownload(state.record, copyPack()).then((how) => {
+        toast(how === "shared" ? t("shared") : t("cardSaved"));
+      }).catch((err) => toast(err.message));
+    });
+  }
+
+  function registerShell() {
+    if (!("serviceWorker" in navigator)) return;
+    const host = location.hostname;
+    const secure =
+      location.protocol === "https:" ||
+      host === "localhost" ||
+      host === "127.0.0.1";
+    if (!secure) return;
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+
+  applyLang();
+  bind();
+  renderRecord();
+  registerShell();
+})();
+
+</script>
+</body>
+</html>
