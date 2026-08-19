@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from mcp_auth import AuthRequired, connect_state, require_session
+from mcp_auth import AuthRequired, agent_state, connect_state, require_agent, require_session
 from mcp_consent import ConsentOff, is_enabled, load_consent, load_snapshot, save_snapshot
 
 VALID_ABO = {"A", "B", "AB", "O"}
@@ -28,6 +28,7 @@ def status() -> dict[str, Any]:
     return {
         "enabled": is_enabled(),
         "auth": connect_state(),
+        "agent": agent_state(),
         "consent": load_consent(),
     }
 
@@ -174,6 +175,7 @@ def call(name: str, arguments: dict[str, Any] | None = None) -> Any:
     if name == "mcp_status":
         return status()
     require_session()
+    require_agent()
     if not is_enabled():
         raise ConsentOff(
             "MCP is off. The user must enable it in Confdence and accept every risk."

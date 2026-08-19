@@ -7,19 +7,26 @@ import sys
 
 
 def _refuse() -> int:
-    from mcp_auth import connect_state
+    from mcp_auth import agent_state, connect_state
     from mcp_consent import is_enabled
 
     state = connect_state()
     if state != "unlocked":
         sys.stderr.write(
-            "Confdence MCP: authenticate first "
+            "Confdence MCP: holder must authenticate first "
             f"({state}). python3 mcp_auth.py unlock\n"
         )
         return 1
     if not is_enabled():
         sys.stderr.write(
             "Confdence MCP: consent is off. Enable it in the app, then install the pack.\n"
+        )
+        return 1
+    agent = agent_state()
+    if agent != "ok":
+        sys.stderr.write(
+            "Confdence MCP: agent must authenticate "
+            f"({agent}). Mint a token and set CONFDENCE_AGENT_TOKEN.\n"
         )
         return 1
     return 0

@@ -79,6 +79,8 @@
           <button type="button" class="ghost hidden" id="auth-lock" data-i18n="authLock">Verrouiller</button>
           <button type="button" class="primary hidden" id="mcp-toggle" data-i18n="mcpEnable">Activer…</button>
           <button type="button" class="ghost hidden" id="mcp-pack" data-i18n="mcpDownload">Télécharger le paquet agent</button>
+          <button type="button" class="ghost hidden" id="mcp-mint" data-i18n="agentMint">Créer un jeton agent</button>
+          <button type="button" class="text-btn hidden" id="mcp-revoke" data-i18n="agentRevoke">Révoquer le jeton</button>
         </div>
         <pre class="url hidden" id="mcp-snippet"></pre>
       </section>
@@ -183,6 +185,18 @@
         <button type="submit" class="primary" data-i18n="authUnlock">Déverrouiller</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="agent-dialog" class="dialog">
+    <div>
+      <h2 data-i18n="agentMintTitle">Jeton agent</h2>
+      <p class="warn" data-i18n="agentMintHelp">Affiché une seule fois. L’agent doit présenter ce secret (CONFDENCE_AGENT_TOKEN) pour se connecter. Ce n’est pas votre mot de passe.</p>
+      <p class="url" id="agent-token"></p>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="agent-copy" data-i18n="copy">Copier</button>
+        <button type="button" class="primary" id="agent-done" data-i18n="done">Fermer</button>
+      </div>
+    </div>
   </dialog>
 
   <dialog id="mcp-dialog" class="dialog">

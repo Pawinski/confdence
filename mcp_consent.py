@@ -137,12 +137,15 @@ def load_snapshot() -> dict[str, Any]:
 
 
 def install_pack(path: Path) -> dict[str, Any]:
-    from mcp_auth import has_password, install_verifier
+    from mcp_auth import has_password, install_agent_hash, install_verifier
 
     data = json.loads(path.read_text(encoding="utf-8"))
     auth = data.get("auth")
     if isinstance(auth, dict) and not has_password():
         install_verifier(auth)
+    agent = data.get("agent")
+    if isinstance(agent, dict) and agent.get("hash"):
+        install_agent_hash(agent)
     consent = data.get("consent") or {}
     enable(list(consent.get("acknowledged") or []))
     record = data.get("record") if isinstance(data.get("record"), dict) else {}

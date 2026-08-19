@@ -1,3 +1,6 @@
 [mcp_servers.confdence]
 command = "/Users/apawinski/dev/health/.venv/bin/python"
 args = ["/Users/apawinski/dev/health/mcp_server.py"]
+
+[mcp_servers.confdence.env]
+CONFDENCE_AGENT_TOKEN = "${CONFDENCE_AGENT_TOKEN}"

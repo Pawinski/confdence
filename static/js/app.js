@@ -452,6 +452,10 @@
     $("mcp-form").addEventListener("submit", acceptMcp);
     $("mcp-form").addEventListener("change", refreshMcpConfirm);
     $("mcp-pack").addEventListener("click", downloadPack);
+    $("mcp-mint").addEventListener("click", mintAgent);
+    $("mcp-revoke").addEventListener("click", revokeAgent);
+    $("agent-done").addEventListener("click", () => $("agent-dialog").close());
+    $("agent-copy").addEventListener("click", copyAgentToken);
     $("declare-btn").addEventListener("click", openDeclare);
     $("declare-cancel").addEventListener("click", () => $("declare-dialog").close());
     $("declare-form").addEventListener("submit", declareIncident);
@@ -497,6 +501,9 @@
       'command = "/Users/apawinski/dev/health/.venv/bin/python"',
       'args = ["/Users/apawinski/dev/health/mcp_server.py"]',
       "",
+      "[mcp_servers.confdence.env]",
+      'CONFDENCE_AGENT_TOKEN = "${CONFDENCE_AGENT_TOKEN}"',
+      "",
       t("mcpInstallHelp"),
     ].join("\n");
   }
@@ -518,6 +525,8 @@
     $("mcp-toggle").classList.toggle("primary", !on);
     $("mcp-toggle").classList.toggle("ghost", on);
     $("mcp-pack").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-mint").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-revoke").classList.toggle("hidden", !on || !unlocked || !mcpGate.hasAgentToken());
     $("mcp-snippet").classList.toggle("hidden", !on || !unlocked);
     $("mcp-snippet").textContent = on && unlocked ? mcpSnippet() : "";
   }
@@ -680,6 +689,49 @@
       });
     } catch (err) {
       /* Pages / file — Mac unlock is the agent gate */
+    }
+  }
+
+  async function mintAgent() {
+    if (!auth.isUnlocked() || !mcpGate.isEnabled()) {
+      toast(t("mcpNeedAuth"));
+      return;
+    }
+    const minted = await mcpGate.mintAgentToken();
+    $("agent-token").textContent = minted.token;
+    $("agent-dialog").showModal();
+    await persistAgent("mint", minted.hash);
+    renderMcp();
+  }
+
+  function revokeAgent() {
+    mcpGate.revokeAgentToken();
+    persistAgent("revoke", "");
+    renderMcp();
+    toast(t("agentRevoked"));
+  }
+
+  async function copyAgentToken() {
+    const text = $("agent-token").textContent;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    toast(t("agentCopied"));
+  }
+
+  async function persistAgent(kind, hash) {
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    try {
+      await fetch(kind === "mint" ? "/api/auth/agent/mint" : "/api/auth/agent/revoke", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify(kind === "mint" ? { hash: hash } : {}),
+      });
+    } catch (err) {
+      /* optional local API */
     }
   }
 

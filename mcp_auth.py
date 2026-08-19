@@ -224,6 +224,81 @@ def connect_state() -> str:
     return "unlocked"
 
 
+def agent_path() -> Path:
+    return home() / "agent.json"
+
+
+def has_agent_token() -> bool:
+    path = agent_path()
+    if not path.exists():
+        return False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return bool(data.get("hash"))
+
+
+def install_agent_hash(row: dict[str, Any]) -> None:
+    digest = str(row.get("hash") or "")
+    if len(digest) != 64:
+        raise ValueError("invalid agent token hash")
+    _write(
+        agent_path(),
+        {"hash": digest, "created_at": row.get("created_at") or utcnow()},
+    )
+
+
+def mint_agent_token() -> str:
+    require_session()
+    token = secrets.token_urlsafe(32)
+    _write(
+        agent_path(),
+        {
+            "hash": hashlib.sha256(token.encode("utf-8")).hexdigest(),
+            "created_at": utcnow(),
+        },
+    )
+    return token
+
+
+def revoke_agent_token() -> None:
+    path = agent_path()
+    if path.exists():
+        path.unlink()
+
+
+def verify_agent_token(token: str | None) -> bool:
+    if not has_agent_token():
+        return False
+    presented = (token or "").strip()
+    if not presented:
+        return False
+    data = json.loads(agent_path().read_text(encoding="utf-8"))
+    expected = str(data.get("hash") or "")
+    got = hashlib.sha256(presented.encode("utf-8")).hexdigest()
+    return hmac.compare_digest(got, expected)
+
+
+def presented_agent_token() -> str | None:
+    return os.environ.get("CONFDENCE_AGENT_TOKEN")
+
+
+def require_agent() -> None:
+    if not has_agent_token():
+        raise AuthRequired("mint an agent token first")
+    if not verify_agent_token(presented_agent_token()):
+        raise AuthRequired("agent must present CONFDENCE_AGENT_TOKEN")
+
+
+def agent_state() -> str:
+    if not has_agent_token():
+        return "no_token"
+    if not verify_agent_token(presented_agent_token()):
+        return "bad_token"
+    return "ok"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Confdence MCP auth")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -231,6 +306,8 @@ def main() -> None:
     sub.add_parser("set")
     sub.add_parser("unlock")
     sub.add_parser("lock")
+    sub.add_parser("mint")
+    sub.add_parser("revoke-agent")
     args = parser.parse_args()
     if args.cmd == "status":
         print(
@@ -239,6 +316,7 @@ def main() -> None:
                     "has_password": has_password(),
                     "unlocked": session_valid(),
                     "state": connect_state(),
+                    "agent": agent_state(),
                 },
                 indent=2,
             )
@@ -247,6 +325,14 @@ def main() -> None:
     if args.cmd == "lock":
         lock()
         print(json.dumps({"unlocked": False}))
+        return
+    if args.cmd == "revoke-agent":
+        revoke_agent_token()
+        print(json.dumps({"agent": "no_token"}))
+        return
+    if args.cmd == "mint":
+        token = mint_agent_token()
+        print(token)
         return
     pw = getpass.getpass("Password: ")
     if args.cmd == "set":

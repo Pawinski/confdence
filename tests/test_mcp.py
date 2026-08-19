@@ -29,6 +29,7 @@ def test_mcp_off_by_default(tmp_path: Path, monkeypatch) -> None:
 
 def test_tools_refuse_without_consent(tmp_path: Path, monkeypatch) -> None:
     _unlock(tmp_path, monkeypatch)
+    monkeypatch.setenv("CONFDENCE_AGENT_TOKEN", mcp_auth.mint_agent_token())
     try:
         mcp_tools.call("get_record")
         assert False, "expected ConsentOff"
@@ -76,6 +77,7 @@ def test_enable_then_read_write(tmp_path: Path, monkeypatch) -> None:
     _unlock(tmp_path, monkeypatch)
     mcp_consent.enable(list(REQUIRED_ACKS))
     assert mcp_consent.is_enabled() is True
+    monkeypatch.setenv("CONFDENCE_AGENT_TOKEN", mcp_auth.mint_agent_token())
     mcp_tools.call(
         "update_record",
         {
@@ -134,7 +136,48 @@ def test_install_pack(tmp_path: Path, monkeypatch) -> None:
     )
     mcp_consent.install_pack(pack)
     assert mcp_consent.is_enabled() is True
+    token = mcp_auth.mint_agent_token()
+    monkeypatch.setenv("CONFDENCE_AGENT_TOKEN", token)
     assert mcp_tools.call("get_record")["record"]["display_name"] == "Alexander Pawinski"
+
+
+def test_agent_must_present_token(tmp_path: Path, monkeypatch) -> None:
+    _unlock(tmp_path, monkeypatch)
+    mcp_consent.enable(list(REQUIRED_ACKS))
+    try:
+        mcp_tools.call("get_record")
+        assert False, "expected AuthRequired"
+    except AuthRequired:
+        pass
+    token = mcp_auth.mint_agent_token()
+    monkeypatch.setenv("CONFDENCE_AGENT_TOKEN", "wrong-token")
+    try:
+        mcp_tools.call("get_record")
+        assert False, "expected AuthRequired"
+    except AuthRequired:
+        pass
+    monkeypatch.setenv("CONFDENCE_AGENT_TOKEN", token)
+    assert "record" in mcp_tools.call("get_record")
+
+
+def test_server_refuses_agent_without_token(tmp_path: Path, monkeypatch) -> None:
+    _unlock(tmp_path, monkeypatch)
+    mcp_consent.enable(list(REQUIRED_ACKS))
+    mcp_auth.mint_agent_token()
+    import subprocess
+    import sys
+
+    env = os.environ.copy()
+    env["CONFDENCE_HOME"] = str(tmp_path / "confdence-home")
+    env.pop("CONFDENCE_AGENT_TOKEN", None)
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parents[1] / "mcp_server.py")],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 1
+    assert "agent must authenticate" in result.stderr
 
 
 def test_server_will_not_start_when_locked(tmp_path: Path, monkeypatch) -> None:

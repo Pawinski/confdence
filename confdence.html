@@ -456,6 +456,8 @@ input, select, textarea {
           <button type="button" class="ghost hidden" id="auth-lock" data-i18n="authLock">Verrouiller</button>
           <button type="button" class="primary hidden" id="mcp-toggle" data-i18n="mcpEnable">Activer…</button>
           <button type="button" class="ghost hidden" id="mcp-pack" data-i18n="mcpDownload">Télécharger le paquet agent</button>
+          <button type="button" class="ghost hidden" id="mcp-mint" data-i18n="agentMint">Créer un jeton agent</button>
+          <button type="button" class="text-btn hidden" id="mcp-revoke" data-i18n="agentRevoke">Révoquer le jeton</button>
         </div>
         <pre class="url hidden" id="mcp-snippet"></pre>
       </section>
@@ -560,6 +562,18 @@ input, select, textarea {
         <button type="submit" class="primary" data-i18n="authUnlock">Déverrouiller</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="agent-dialog" class="dialog">
+    <div>
+      <h2 data-i18n="agentMintTitle">Jeton agent</h2>
+      <p class="warn" data-i18n="agentMintHelp">Affiché une seule fois. L’agent doit présenter ce secret (CONFDENCE_AGENT_TOKEN) pour se connecter. Ce n’est pas votre mot de passe.</p>
+      <p class="url" id="agent-token"></p>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="agent-copy" data-i18n="copy">Copier</button>
+        <button type="button" class="primary" id="agent-done" data-i18n="done">Fermer</button>
+      </div>
+    </div>
   </dialog>
 
   <dialog id="mcp-dialog" class="dialog">
@@ -779,7 +793,7 @@ window.HEALTH_COPY = {
     mcpOn: "MCP allumé. Les agents peuvent lire et écrire le paquet installé.",
     mcpPackSaved: "Paquet agent enregistré. Installez-le avant d’ouvrir un agent.",
     mcpNeedChecks: "Cochez chaque risque.",
-    mcpInstallHelp: "Ensuite, sur ce Mac : python3 mcp_consent.py install <paquet.json> puis python3 mcp_auth.py unlock",
+    mcpInstallHelp: "Ensuite, sur ce Mac : installer le paquet, unlock, puis export CONFDENCE_AGENT_TOKEN=…",
     authSet: "Créer un mot de passe",
     authSetTitle: "Créer un mot de passe",
     authSetHelp: "Les agents ne se connectent pas tant que ce mot de passe n’est pas créé, puis déverrouillé. Dix caractères minimum.",
@@ -797,6 +811,13 @@ window.HEALTH_COPY = {
     authUnlocked: "Déverrouillé.",
     authLocked: "Verrouillé. Les agents ne peuvent plus se connecter.",
     mcpNeedAuth: "Créez un mot de passe, puis déverrouillez, avant d’activer l’accès agent.",
+    agentMint: "Créer un jeton agent",
+    agentMintTitle: "Jeton agent",
+    agentMintHelp: "Affiché une seule fois. L’agent doit présenter ce secret (CONFDENCE_AGENT_TOKEN) pour se connecter. Ce n’est pas votre mot de passe.",
+    agentRevoke: "Révoquer le jeton",
+    agentCopied: "Jeton copié",
+    agentRevoked: "Jeton agent révoqué. Plus aucun agent ne peut se connecter.",
+    copy: "Copier",
   },
   en: {
     mark: "Confdence",
@@ -904,7 +925,7 @@ window.HEALTH_COPY = {
     mcpOn: "MCP on. Agents can read and write the installed pack.",
     mcpPackSaved: "Agent pack saved. Install it before opening an agent.",
     mcpNeedChecks: "Check every risk.",
-    mcpInstallHelp: "Then on this Mac: python3 mcp_consent.py install <pack.json> then python3 mcp_auth.py unlock",
+    mcpInstallHelp: "Then on this Mac: install the pack, unlock, then export CONFDENCE_AGENT_TOKEN=…",
     authSet: "Create a password",
     authSetTitle: "Create a password",
     authSetHelp: "Agents cannot connect until this password exists and you unlock. Ten characters minimum.",
@@ -922,6 +943,13 @@ window.HEALTH_COPY = {
     authUnlocked: "Unlocked.",
     authLocked: "Locked. Agents cannot connect.",
     mcpNeedAuth: "Set a password and unlock before turning agent access on.",
+    agentMint: "Mint an agent token",
+    agentMintTitle: "Agent token",
+    agentMintHelp: "Shown once. The agent must present this secret (CONFDENCE_AGENT_TOKEN) to connect. This is not your password.",
+    agentRevoke: "Revoke token",
+    agentCopied: "Token copied",
+    agentRevoked: "Agent token revoked. No agent can connect.",
+    copy: "Copy",
   },
 };
 
@@ -1331,16 +1359,69 @@ window.ConfdenceMcp = (() => {
     return row;
   }
 
+  const AGENT_KEY = "confdence.agent.v1";
+
+  function agentMeta() {
+    try {
+      const raw = localStorage.getItem(AGENT_KEY);
+      return raw ? JSON.parse(raw) : { hash: "" };
+    } catch (err) {
+      return { hash: "" };
+    }
+  }
+
+  function hasAgentToken() {
+    return Boolean(agentMeta().hash);
+  }
+
+  function revokeAgentToken() {
+    localStorage.removeItem(AGENT_KEY);
+  }
+
+  async function mintAgentToken() {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const token = btoa(String.fromCharCode.apply(null, Array.from(bytes)))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(token)
+    );
+    const hash = Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    localStorage.setItem(
+      AGENT_KEY,
+      JSON.stringify({ hash: hash, created_at: new Date().toISOString() })
+    );
+    return { token: token, hash: hash };
+  }
+
   function pack(record, incidents, consent, auth) {
     return {
       consent: consent || load(),
       auth: auth || null,
+      agent: hasAgentToken() ? { hash: agentMeta().hash } : null,
       record: record || {},
       incidents: incidents || [],
     };
   }
 
-  return { KEY, VERSION, REQUIRED, load, isEnabled, enable, disable, pack };
+  return {
+    KEY,
+    VERSION,
+    REQUIRED,
+    load,
+    isEnabled,
+    enable,
+    disable,
+    pack,
+    hasAgentToken,
+    mintAgentToken,
+    revokeAgentToken,
+    agentMeta,
+  };
 })();
 
 window.ConfdenceCard = (() => {
@@ -1957,6 +2038,10 @@ window.ConfdenceCard = (() => {
     $("mcp-form").addEventListener("submit", acceptMcp);
     $("mcp-form").addEventListener("change", refreshMcpConfirm);
     $("mcp-pack").addEventListener("click", downloadPack);
+    $("mcp-mint").addEventListener("click", mintAgent);
+    $("mcp-revoke").addEventListener("click", revokeAgent);
+    $("agent-done").addEventListener("click", () => $("agent-dialog").close());
+    $("agent-copy").addEventListener("click", copyAgentToken);
     $("declare-btn").addEventListener("click", openDeclare);
     $("declare-cancel").addEventListener("click", () => $("declare-dialog").close());
     $("declare-form").addEventListener("submit", declareIncident);
@@ -2002,6 +2087,9 @@ window.ConfdenceCard = (() => {
       'command = "/Users/apawinski/dev/health/.venv/bin/python"',
       'args = ["/Users/apawinski/dev/health/mcp_server.py"]',
       "",
+      "[mcp_servers.confdence.env]",
+      'CONFDENCE_AGENT_TOKEN = "${CONFDENCE_AGENT_TOKEN}"',
+      "",
       t("mcpInstallHelp"),
     ].join("\n");
   }
@@ -2023,6 +2111,8 @@ window.ConfdenceCard = (() => {
     $("mcp-toggle").classList.toggle("primary", !on);
     $("mcp-toggle").classList.toggle("ghost", on);
     $("mcp-pack").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-mint").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-revoke").classList.toggle("hidden", !on || !unlocked || !mcpGate.hasAgentToken());
     $("mcp-snippet").classList.toggle("hidden", !on || !unlocked);
     $("mcp-snippet").textContent = on && unlocked ? mcpSnippet() : "";
   }
@@ -2185,6 +2275,49 @@ window.ConfdenceCard = (() => {
       });
     } catch (err) {
       /* Pages / file — Mac unlock is the agent gate */
+    }
+  }
+
+  async function mintAgent() {
+    if (!auth.isUnlocked() || !mcpGate.isEnabled()) {
+      toast(t("mcpNeedAuth"));
+      return;
+    }
+    const minted = await mcpGate.mintAgentToken();
+    $("agent-token").textContent = minted.token;
+    $("agent-dialog").showModal();
+    await persistAgent("mint", minted.hash);
+    renderMcp();
+  }
+
+  function revokeAgent() {
+    mcpGate.revokeAgentToken();
+    persistAgent("revoke", "");
+    renderMcp();
+    toast(t("agentRevoked"));
+  }
+
+  async function copyAgentToken() {
+    const text = $("agent-token").textContent;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    toast(t("agentCopied"));
+  }
+
+  async function persistAgent(kind, hash) {
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    try {
+      await fetch(kind === "mint" ? "/api/auth/agent/mint" : "/api/auth/agent/revoke", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify(kind === "mint" ? { hash: hash } : {}),
+      });
+    } catch (err) {
+      /* optional local API */
     }
   }
 

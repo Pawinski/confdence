@@ -57,14 +57,67 @@ window.ConfdenceMcp = (() => {
     return row;
   }
 
+  const AGENT_KEY = "confdence.agent.v1";
+
+  function agentMeta() {
+    try {
+      const raw = localStorage.getItem(AGENT_KEY);
+      return raw ? JSON.parse(raw) : { hash: "" };
+    } catch (err) {
+      return { hash: "" };
+    }
+  }
+
+  function hasAgentToken() {
+    return Boolean(agentMeta().hash);
+  }
+
+  function revokeAgentToken() {
+    localStorage.removeItem(AGENT_KEY);
+  }
+
+  async function mintAgentToken() {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const token = btoa(String.fromCharCode.apply(null, Array.from(bytes)))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(token)
+    );
+    const hash = Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    localStorage.setItem(
+      AGENT_KEY,
+      JSON.stringify({ hash: hash, created_at: new Date().toISOString() })
+    );
+    return { token: token, hash: hash };
+  }
+
   function pack(record, incidents, consent, auth) {
     return {
       consent: consent || load(),
       auth: auth || null,
+      agent: hasAgentToken() ? { hash: agentMeta().hash } : null,
       record: record || {},
       incidents: incidents || [],
     };
   }
 
-  return { KEY, VERSION, REQUIRED, load, isEnabled, enable, disable, pack };
+  return {
+    KEY,
+    VERSION,
+    REQUIRED,
+    load,
+    isEnabled,
+    enable,
+    disable,
+    pack,
+    hasAgentToken,
+    mintAgentToken,
+    revokeAgentToken,
+    agentMeta,
+  };
 })();

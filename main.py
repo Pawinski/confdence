@@ -26,7 +26,10 @@ from mcp_auth import (
     LockedOut,
     cookie_matches,
     has_password,
+    install_agent_hash,
     lock as auth_lock,
+    mint_agent_token,
+    revoke_agent_token,
     session_valid,
     set_password as auth_set_password,
     unlock as auth_unlock,
@@ -470,3 +473,42 @@ def auth_lock_route(request: Request) -> Response:
     response = JSONResponse({"ok": True, "unlocked": False})
     response.delete_cookie(AUTH_COOKIE, path="/")
     return response
+
+
+@app.post("/api/auth/agent/mint")
+async def auth_agent_mint(request: Request) -> Response:
+    limited = _limited(request, "auth")
+    if limited:
+        return limited
+    if not _origin_ok(request) or not _csrf_ok(request):
+        return _json_error("csrf", 403)
+    if not _authed(request):
+        return _json_error("auth_required", 401)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if isinstance(body, dict) and body.get("hash"):
+        try:
+            install_agent_hash({"hash": str(body["hash"])})
+        except ValueError as exc:
+            return _json_error(str(exc))
+        return JSONResponse({"ok": True, "has_agent_token": True})
+    try:
+        token = mint_agent_token()
+    except AuthRequired as exc:
+        return _json_error(str(exc), 401)
+    return JSONResponse({"token": token, "has_agent_token": True})
+
+
+@app.post("/api/auth/agent/revoke")
+def auth_agent_revoke(request: Request) -> Response:
+    limited = _limited(request, "auth")
+    if limited:
+        return limited
+    if not _origin_ok(request) or not _csrf_ok(request):
+        return _json_error("csrf", 403)
+    if not _authed(request):
+        return _json_error("auth_required", 401)
+    revoke_agent_token()
+    return JSONResponse({"ok": True, "has_agent_token": False})
