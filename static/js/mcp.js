@@ -57,9 +57,10 @@ window.ConfdenceMcp = (() => {
     return row;
   }
 
-  function pack(record, incidents, consent) {
+  function pack(record, incidents, consent, auth) {
     return {
       consent: consent || load(),
+      auth: auth || null,
       record: record || {},
       incidents: incidents || [],
     };

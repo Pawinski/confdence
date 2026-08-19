@@ -7,6 +7,7 @@ const SHELL = [
   "./js/copy.js",
   "./js/store.js",
   "./js/incidents.js",
+  "./js/auth.js",
   "./js/mcp.js",
   "./js/card.js",
   "./js/app.js",

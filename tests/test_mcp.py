@@ -4,11 +4,13 @@ from pathlib import Path
 
 os.environ["HEALTH_TESTING"] = "1"
 
+import mcp_auth
 import mcp_consent
 import mcp_tools
 from fastapi.testclient import TestClient
 
 import main
+from mcp_auth import AuthRequired
 from mcp_consent import CONSENT_VERSION, REQUIRED_ACKS, ConsentOff
 
 
@@ -26,7 +28,7 @@ def test_mcp_off_by_default(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_tools_refuse_without_consent(tmp_path: Path, monkeypatch) -> None:
-    _home(tmp_path, monkeypatch)
+    _unlock(tmp_path, monkeypatch)
     try:
         mcp_tools.call("get_record")
         assert False, "expected ConsentOff"
@@ -35,7 +37,7 @@ def test_tools_refuse_without_consent(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_partial_acks_do_not_enable(tmp_path: Path, monkeypatch) -> None:
-    _home(tmp_path, monkeypatch)
+    _unlock(tmp_path, monkeypatch)
     try:
         mcp_consent.enable(["agents_read"])
         assert False, "expected ValueError"
@@ -44,8 +46,34 @@ def test_partial_acks_do_not_enable(tmp_path: Path, monkeypatch) -> None:
     assert mcp_consent.is_enabled() is False
 
 
-def test_enable_then_read_write(tmp_path: Path, monkeypatch) -> None:
+def _unlock(tmp_path: Path, monkeypatch, password: str = "correct-horse") -> None:
     _home(tmp_path, monkeypatch)
+    mcp_auth.set_password(password)
+
+
+def test_enable_requires_password(tmp_path: Path, monkeypatch) -> None:
+    _home(tmp_path, monkeypatch)
+    try:
+        mcp_consent.enable(list(REQUIRED_ACKS))
+        assert False, "expected ValueError"
+    except ValueError:
+        pass
+
+
+def test_tools_refuse_when_locked(tmp_path: Path, monkeypatch) -> None:
+    _home(tmp_path, monkeypatch)
+    mcp_auth.set_password("correct-horse")
+    mcp_consent.enable(list(REQUIRED_ACKS))
+    mcp_auth.lock()
+    try:
+        mcp_tools.call("get_record")
+        assert False, "expected AuthRequired"
+    except AuthRequired:
+        pass
+
+
+def test_enable_then_read_write(tmp_path: Path, monkeypatch) -> None:
+    _unlock(tmp_path, monkeypatch)
     mcp_consent.enable(list(REQUIRED_ACKS))
     assert mcp_consent.is_enabled() is True
     mcp_tools.call(
@@ -88,7 +116,7 @@ def test_stale_consent_version_is_off(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_install_pack(tmp_path: Path, monkeypatch) -> None:
-    _home(tmp_path, monkeypatch)
+    _unlock(tmp_path, monkeypatch)
     pack = tmp_path / "pack.json"
     pack.write_text(
         json.dumps(
@@ -109,6 +137,23 @@ def test_install_pack(tmp_path: Path, monkeypatch) -> None:
     assert mcp_tools.call("get_record")["record"]["display_name"] == "Alexander Pawinski"
 
 
+def test_server_will_not_start_when_locked(tmp_path: Path, monkeypatch) -> None:
+    _home(tmp_path, monkeypatch)
+    import subprocess
+    import sys
+
+    env = os.environ.copy()
+    env["CONFDENCE_HOME"] = str(tmp_path / "confdence-home")
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parents[1] / "mcp_server.py")],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 1
+    assert "authenticate first" in result.stderr
+
+
 def test_ui_requires_consent_copy() -> None:
     root = Path(__file__).resolve().parents[1]
     html = (root / "static" / "index.html").read_text(encoding="utf-8")
@@ -127,6 +172,20 @@ def test_api_consent_gate(tmp_path: Path, monkeypatch) -> None:
     token = client.cookies["health_csrf"]
     status = client.get("/api/mcp/status").json()
     assert status["enabled"] is False
+    assert status["has_password"] is False
+    unauth = client.post(
+        "/api/mcp/consent",
+        headers={"X-CSRF-Token": token, "Origin": "http://testserver"},
+        json={"enabled": True, "acknowledged": list(REQUIRED_ACKS)},
+    )
+    assert unauth.status_code == 401
+    sett = client.post(
+        "/api/auth/set",
+        headers={"X-CSRF-Token": token, "Origin": "http://testserver"},
+        json={"password": "correct-horse"},
+    )
+    assert sett.status_code == 200
+    token = client.cookies["health_csrf"]
     denied = client.post(
         "/api/mcp/consent",
         headers={"X-CSRF-Token": token, "Origin": "http://testserver"},
@@ -152,3 +211,15 @@ def test_api_consent_gate(tmp_path: Path, monkeypatch) -> None:
         json={"enabled": False},
     )
     assert off.json()["enabled"] is False
+
+
+def test_bad_unlock_is_refused(tmp_path: Path, monkeypatch) -> None:
+    _home(tmp_path, monkeypatch)
+    mcp_auth.set_password("correct-horse")
+    mcp_auth.lock()
+    try:
+        mcp_auth.unlock("wrong-password-value")
+        assert False, "expected AuthRequired"
+    except AuthRequired:
+        pass
+    assert mcp_auth.session_valid() is False

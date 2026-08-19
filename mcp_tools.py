@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from mcp_auth import AuthRequired, connect_state, require_session
 from mcp_consent import ConsentOff, is_enabled, load_consent, load_snapshot, save_snapshot
 
 VALID_ABO = {"A", "B", "AB", "O"}
@@ -24,7 +25,11 @@ def _nid(prefix: str) -> str:
 
 
 def status() -> dict[str, Any]:
-    return {"enabled": is_enabled(), "consent": load_consent()}
+    return {
+        "enabled": is_enabled(),
+        "auth": connect_state(),
+        "consent": load_consent(),
+    }
 
 
 def get_record() -> dict[str, Any]:
@@ -168,6 +173,7 @@ def call(name: str, arguments: dict[str, Any] | None = None) -> Any:
     args = arguments or {}
     if name == "mcp_status":
         return status()
+    require_session()
     if not is_enabled():
         raise ConsentOff(
             "MCP is off. The user must enable it in Confdence and accept every risk."

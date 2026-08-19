@@ -4,6 +4,7 @@
   const card = window.ConfdenceCard;
   const incidents = window.ConfdenceIncidents;
   const mcpGate = window.ConfdenceMcp;
+  const auth = window.ConfdenceAuth;
   const state = {
     lang: localStorage.getItem("health.lang") || "fr",
     record: store.load(),
@@ -439,6 +440,13 @@
       if (!$("hold-card").classList.contains("hidden")) renderHold();
       if (state.incidentId) renderIncident();
     });
+    $("auth-set").addEventListener("click", () => $("auth-set-dialog").showModal());
+    $("auth-set-cancel").addEventListener("click", () => $("auth-set-dialog").close());
+    $("auth-set-form").addEventListener("submit", submitSetPassword);
+    $("auth-unlock").addEventListener("click", () => $("auth-unlock-dialog").showModal());
+    $("auth-unlock-cancel").addEventListener("click", () => $("auth-unlock-dialog").close());
+    $("auth-unlock-form").addEventListener("submit", submitUnlock);
+    $("auth-lock").addEventListener("click", submitLock);
     $("mcp-toggle").addEventListener("click", toggleMcp);
     $("mcp-cancel").addEventListener("click", () => $("mcp-dialog").close());
     $("mcp-form").addEventListener("submit", acceptMcp);
@@ -495,13 +503,23 @@
 
   function renderMcp() {
     const on = mcpGate.isEnabled();
-    $("mcp-state").textContent = on ? t("mcpOn") : t("mcpOff");
+    const hasPw = auth.hasPassword();
+    const unlocked = auth.isUnlocked();
+    let stateText = t("mcpOff");
+    if (!hasPw) stateText = t("mcpNeedAuth");
+    else if (!unlocked) stateText = t("authLocked");
+    else if (on) stateText = t("mcpOn");
+    $("mcp-state").textContent = stateText;
+    $("auth-set").classList.toggle("hidden", hasPw);
+    $("auth-unlock").classList.toggle("hidden", !hasPw || unlocked);
+    $("auth-lock").classList.toggle("hidden", !unlocked);
+    $("mcp-toggle").classList.toggle("hidden", !unlocked);
     $("mcp-toggle").textContent = on ? t("mcpDisable") : t("mcpEnable");
     $("mcp-toggle").classList.toggle("primary", !on);
     $("mcp-toggle").classList.toggle("ghost", on);
-    $("mcp-pack").classList.toggle("hidden", !on);
-    $("mcp-snippet").classList.toggle("hidden", !on);
-    $("mcp-snippet").textContent = on ? mcpSnippet() : "";
+    $("mcp-pack").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-snippet").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-snippet").textContent = on && unlocked ? mcpSnippet() : "";
   }
 
   function mcpAcksFromForm() {
@@ -514,7 +532,12 @@
   }
 
   function downloadPack() {
-    const payload = mcpGate.pack(state.record, incidents.loadAll(), mcpGate.load());
+    const payload = mcpGate.pack(
+      state.record,
+      incidents.loadAll(),
+      mcpGate.load(),
+      auth.hasPassword() ? auth.verifier() : null
+    );
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -587,7 +610,86 @@
     downloadPack();
   }
 
+  async function submitSetPassword(event) {
+    event.preventDefault();
+    const form = $("auth-set-form");
+    const pw = form.password.value;
+    const again = form.confirm.value;
+    if (pw !== again) {
+      toast(t("authNeedMatch"));
+      return;
+    }
+    if (pw.length < auth.MIN) {
+      toast(t("authTooShort"));
+      return;
+    }
+    try {
+      await auth.setPassword(pw);
+    } catch (err) {
+      toast(t("authTooShort"));
+      return;
+    }
+    await persistAuth("set", pw);
+    form.reset();
+    $("auth-set-dialog").close();
+    renderMcp();
+    toast(t("authReady"));
+  }
+
+  async function submitUnlock(event) {
+    event.preventDefault();
+    const form = $("auth-unlock-form");
+    const pw = form.password.value;
+    try {
+      await auth.unlock(pw);
+    } catch (err) {
+      toast(t("authBad"));
+      return;
+    }
+    await persistAuth("unlock", pw);
+    form.reset();
+    $("auth-unlock-dialog").close();
+    renderMcp();
+    toast(t("authUnlocked"));
+  }
+
+  async function submitLock() {
+    auth.lock();
+    await persistAuth("lock", "");
+    if (mcpGate.isEnabled()) {
+      /* consent stays; connection is what lock cuts */
+    }
+    renderMcp();
+    toast(t("authLocked"));
+  }
+
+  async function persistAuth(kind, password) {
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    const path =
+      kind === "set" ? "/api/auth/set" : kind === "unlock" ? "/api/auth/unlock" : "/api/auth/lock";
+    const body = kind === "lock" ? {} : { password: password };
+    try {
+      await fetch(path, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      /* Pages / file — Mac unlock is the agent gate */
+    }
+  }
+
   function toggleMcp() {
+    if (!auth.isUnlocked()) {
+      toast(t("mcpNeedAuth"));
+      if (!auth.hasPassword()) $("auth-set-dialog").showModal();
+      else $("auth-unlock-dialog").showModal();
+      return;
+    }
     if (mcpGate.isEnabled()) {
       mcpGate.disable();
       persistConsent(false, []);

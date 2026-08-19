@@ -26,11 +26,14 @@ Do not deploy `uvicorn` / `.data/health.db` with real health facts.
 
 ## Agents (MCP)
 
-Off until you consent in the app (every risk checked). Then:
+Off until you set a password, unlock, and consent (every risk checked). Then:
 
-1. Download the agent pack from the app
-2. `python3 mcp_consent.py install ~/Downloads/confdence-agent-pack.json`
-3. Add to `~/.grok/config.toml` or this repo’s `.grok/config.toml`:
+1. Create a password in the app (10+ characters)
+2. Unlock
+3. Consent and download the agent pack
+4. `python3 mcp_consent.py install ~/Downloads/confdence-agent-pack.json`
+5. `python3 mcp_auth.py unlock`
+6. Add to `~/.grok/config.toml` or this repo’s `.grok/config.toml`:
 
 ```toml
 [mcp_servers.confdence]

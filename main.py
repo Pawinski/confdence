@@ -20,6 +20,17 @@ from fastapi.templating import Jinja2Templates
 from qrcode.image.svg import SvgPathImage
 
 from store import Store
+from mcp_auth import (
+    AUTH_COOKIE,
+    AuthRequired,
+    LockedOut,
+    cookie_matches,
+    has_password,
+    lock as auth_lock,
+    session_valid,
+    set_password as auth_set_password,
+    unlock as auth_unlock,
+)
 from mcp_consent import (
     CONSENT_VERSION,
     REQUIRED_ACKS,
@@ -51,6 +62,7 @@ templates = Jinja2Templates(directory=str(ROOT / "templates"))
 _HITS: dict[str, deque[float]] = defaultdict(deque)
 _LIMITS = {
     "session": 5 if not TESTING else 1000,
+    "auth": 5 if not TESTING else 1000,
     "write": 60 if not TESTING else 1000,
     "read": 120 if not TESTING else 1000,
     "share": 30 if not TESTING else 1000,
@@ -110,6 +122,22 @@ def _csrf_ok(request: Request) -> bool:
 
 def _json_error(message: str, status: int = 400) -> JSONResponse:
     return JSONResponse({"error": message}, status_code=status)
+
+
+def _set_auth_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        AUTH_COOKIE,
+        token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        max_age=int(SESSION_TTL.total_seconds()),
+        path="/",
+    )
+
+
+def _authed(request: Request) -> bool:
+    return cookie_matches(request.cookies.get(AUTH_COOKIE))
 
 
 def _set_csrf(response: Response, token: str | None = None) -> str:
@@ -313,6 +341,8 @@ def mcp_status(request: Request) -> Response:
     return JSONResponse(
         {
             "enabled": mcp_is_enabled(),
+            "unlocked": session_valid() and _authed(request),
+            "has_password": has_password(),
             "version": CONSENT_VERSION,
             "required": list(REQUIRED_ACKS),
             "consent": load_consent(),
@@ -335,6 +365,8 @@ async def mcp_consent(request: Request) -> Response:
         return _json_error("invalid_json")
     if body.get("enabled") is False:
         return JSONResponse({"consent": mcp_disable(), "enabled": False})
+    if not _authed(request):
+        return _json_error("auth_required", 401)
     try:
         row = mcp_enable(list(body.get("acknowledged") or []))
     except ValueError as exc:
@@ -349,6 +381,8 @@ async def mcp_snapshot(request: Request) -> Response:
         return limited
     if not _origin_ok(request) or not _csrf_ok(request):
         return _json_error("csrf", 403)
+    if not _authed(request):
+        return _json_error("auth_required", 401)
     try:
         body = await request.json()
     except Exception:
@@ -359,6 +393,80 @@ async def mcp_snapshot(request: Request) -> Response:
     incidents = body.get("incidents") if isinstance(body.get("incidents"), list) else []
     try:
         save_snapshot(record, incidents)
+    except AuthRequired as exc:
+        return _json_error(str(exc), 401)
     except ConsentOff as exc:
         return _json_error(str(exc), 403)
     return JSONResponse({"ok": True})
+
+
+@app.get("/api/auth/status")
+def auth_status(request: Request) -> Response:
+    limited = _limited(request, "read")
+    if limited:
+        return limited
+    return JSONResponse(
+        {
+            "has_password": has_password(),
+            "unlocked": _authed(request),
+        }
+    )
+
+
+@app.post("/api/auth/set")
+async def auth_set(request: Request) -> Response:
+    limited = _limited(request, "auth")
+    if limited:
+        return limited
+    if not _origin_ok(request) or not _csrf_ok(request):
+        return _json_error("csrf", 403)
+    try:
+        body = await request.json()
+    except Exception:
+        return _json_error("invalid_json")
+    if not isinstance(body, dict):
+        return _json_error("invalid_json")
+    try:
+        session = auth_set_password(str(body.get("password") or ""))
+    except ValueError as exc:
+        return _json_error(str(exc))
+    response = JSONResponse({"ok": True, "has_password": True, "unlocked": True})
+    _set_auth_cookie(response, session["token"])
+    return response
+
+
+@app.post("/api/auth/unlock")
+async def auth_unlock_route(request: Request) -> Response:
+    limited = _limited(request, "auth")
+    if limited:
+        return limited
+    if not _origin_ok(request) or not _csrf_ok(request):
+        return _json_error("csrf", 403)
+    try:
+        body = await request.json()
+    except Exception:
+        return _json_error("invalid_json")
+    if not isinstance(body, dict):
+        return _json_error("invalid_json")
+    try:
+        session = auth_unlock(str(body.get("password") or ""))
+    except LockedOut as exc:
+        return _json_error(str(exc), 429)
+    except AuthRequired as exc:
+        return _json_error(str(exc), 401)
+    response = JSONResponse({"ok": True, "unlocked": True})
+    _set_auth_cookie(response, session["token"])
+    return response
+
+
+@app.post("/api/auth/lock")
+def auth_lock_route(request: Request) -> Response:
+    limited = _limited(request, "auth")
+    if limited:
+        return limited
+    if not _origin_ok(request) or not _csrf_ok(request):
+        return _json_error("csrf", 403)
+    auth_lock()
+    response = JSONResponse({"ok": True, "unlocked": False})
+    response.delete_cookie(AUTH_COOKIE, path="/")
+    return response

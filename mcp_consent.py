@@ -84,6 +84,10 @@ def _write(path: Path, payload: dict[str, Any] | list[Any]) -> None:
 
 
 def enable(acknowledged: list[str]) -> dict[str, Any]:
+    from mcp_auth import has_password
+
+    if not has_password():
+        raise ValueError("set a password before enabling MCP")
     acks = [a for a in REQUIRED_ACKS if a in set(acknowledged)]
     if set(acks) != set(REQUIRED_ACKS):
         missing = [a for a in REQUIRED_ACKS if a not in set(acknowledged)]
@@ -111,7 +115,10 @@ def disable() -> dict[str, Any]:
 
 
 def save_snapshot(record: dict[str, Any], incidents: list[Any]) -> None:
+    from mcp_auth import require_session
+
     require()
+    require_session()
     _write(record_path(), record)
     _write(incidents_path(), incidents)
 
@@ -130,12 +137,18 @@ def load_snapshot() -> dict[str, Any]:
 
 
 def install_pack(path: Path) -> dict[str, Any]:
+    from mcp_auth import has_password, install_verifier
+
     data = json.loads(path.read_text(encoding="utf-8"))
+    auth = data.get("auth")
+    if isinstance(auth, dict) and not has_password():
+        install_verifier(auth)
     consent = data.get("consent") or {}
     enable(list(consent.get("acknowledged") or []))
     record = data.get("record") if isinstance(data.get("record"), dict) else {}
     incidents = data.get("incidents") if isinstance(data.get("incidents"), list) else []
-    save_snapshot(record, incidents)
+    _write(record_path(), record)
+    _write(incidents_path(), incidents)
     return load_consent()
 
 

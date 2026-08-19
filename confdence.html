@@ -451,7 +451,10 @@ input, select, textarea {
         <p class="fine" id="mcp-state"></p>
         <p class="warn" data-i18n="mcpRiskLine">Éteint par défaut. Un agent qui y a accès lit et peut changer ce dossier.</p>
         <div class="hero-actions">
-          <button type="button" class="primary" id="mcp-toggle" data-i18n="mcpEnable">Activer…</button>
+          <button type="button" class="primary" id="auth-set" data-i18n="authSet">Créer un mot de passe</button>
+          <button type="button" class="ghost hidden" id="auth-unlock" data-i18n="authUnlock">Déverrouiller</button>
+          <button type="button" class="ghost hidden" id="auth-lock" data-i18n="authLock">Verrouiller</button>
+          <button type="button" class="primary hidden" id="mcp-toggle" data-i18n="mcpEnable">Activer…</button>
           <button type="button" class="ghost hidden" id="mcp-pack" data-i18n="mcpDownload">Télécharger le paquet agent</button>
         </div>
         <pre class="url hidden" id="mcp-snippet"></pre>
@@ -527,6 +530,37 @@ input, select, textarea {
       <button type="button" class="text-btn" id="inc-back" data-i18n="done">Fermer</button>
     </div>
   </section>
+
+  <dialog id="auth-set-dialog" class="dialog">
+    <form id="auth-set-form" method="dialog">
+      <h2 data-i18n="authSetTitle">Créer un mot de passe</h2>
+      <p class="warn" data-i18n="authSetHelp">Les agents ne se connectent pas tant que ce mot de passe n’est pas créé, puis déverrouillé. Dix caractères minimum.</p>
+      <label><span data-i18n="authPassword">Mot de passe</span>
+        <input name="password" type="password" minlength="10" autocomplete="new-password" required>
+      </label>
+      <label><span data-i18n="authPasswordAgain">Encore une fois</span>
+        <input name="confirm" type="password" minlength="10" autocomplete="new-password" required>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="auth-set-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="authSetSave">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="auth-unlock-dialog" class="dialog">
+    <form id="auth-unlock-form" method="dialog">
+      <h2 data-i18n="authUnlockTitle">Déverrouiller</h2>
+      <p class="fine" data-i18n="authUnlockHelp">Ensuite seulement, un agent peut se connecter.</p>
+      <label><span data-i18n="authPassword">Mot de passe</span>
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="auth-unlock-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="authUnlock">Déverrouiller</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="mcp-dialog" class="dialog">
     <form id="mcp-form" method="dialog">
@@ -745,7 +779,24 @@ window.HEALTH_COPY = {
     mcpOn: "MCP allumé. Les agents peuvent lire et écrire le paquet installé.",
     mcpPackSaved: "Paquet agent enregistré. Installez-le avant d’ouvrir un agent.",
     mcpNeedChecks: "Cochez chaque risque.",
-    mcpInstallHelp: "Ensuite, sur ce Mac : python3 mcp_consent.py install <paquet.json>",
+    mcpInstallHelp: "Ensuite, sur ce Mac : python3 mcp_consent.py install <paquet.json> puis python3 mcp_auth.py unlock",
+    authSet: "Créer un mot de passe",
+    authSetTitle: "Créer un mot de passe",
+    authSetHelp: "Les agents ne se connectent pas tant que ce mot de passe n’est pas créé, puis déverrouillé. Dix caractères minimum.",
+    authSetSave: "Enregistrer",
+    authUnlock: "Déverrouiller",
+    authUnlockTitle: "Déverrouiller",
+    authUnlockHelp: "Ensuite seulement, un agent peut se connecter.",
+    authLock: "Verrouiller",
+    authPassword: "Mot de passe",
+    authPasswordAgain: "Encore une fois",
+    authNeedMatch: "Les deux mots de passe doivent être identiques.",
+    authTooShort: "Dix caractères minimum.",
+    authBad: "Mot de passe refusé.",
+    authReady: "Mot de passe créé. Déverrouillé pour cette session.",
+    authUnlocked: "Déverrouillé.",
+    authLocked: "Verrouillé. Les agents ne peuvent plus se connecter.",
+    mcpNeedAuth: "Créez un mot de passe, puis déverrouillez, avant d’activer l’accès agent.",
   },
   en: {
     mark: "Confdence",
@@ -853,7 +904,24 @@ window.HEALTH_COPY = {
     mcpOn: "MCP on. Agents can read and write the installed pack.",
     mcpPackSaved: "Agent pack saved. Install it before opening an agent.",
     mcpNeedChecks: "Check every risk.",
-    mcpInstallHelp: "Then on this Mac: python3 mcp_consent.py install <pack.json>",
+    mcpInstallHelp: "Then on this Mac: python3 mcp_consent.py install <pack.json> then python3 mcp_auth.py unlock",
+    authSet: "Create a password",
+    authSetTitle: "Create a password",
+    authSetHelp: "Agents cannot connect until this password exists and you unlock. Ten characters minimum.",
+    authSetSave: "Save",
+    authUnlock: "Unlock",
+    authUnlockTitle: "Unlock",
+    authUnlockHelp: "Only then can an agent connect.",
+    authLock: "Lock",
+    authPassword: "Password",
+    authPasswordAgain: "Again",
+    authNeedMatch: "Both passwords must match.",
+    authTooShort: "Ten characters minimum.",
+    authBad: "Password refused.",
+    authReady: "Password saved. Unlocked for this session.",
+    authUnlocked: "Unlocked.",
+    authLocked: "Locked. Agents cannot connect.",
+    mcpNeedAuth: "Set a password and unlock before turning agent access on.",
   },
 };
 
@@ -1102,6 +1170,108 @@ window.ConfdenceIncidents = (() => {
   };
 })();
 
+window.ConfdenceAuth = (() => {
+  const VERIFIER_KEY = "confdence.auth.v1";
+  const SESSION_KEY = "confdence.auth.session";
+  const ITERS = 210000;
+  const MIN = 10;
+
+  function empty() {
+    return { algo: "pbkdf2-sha256", iters: ITERS, salt: "", hash: "" };
+  }
+
+  function loadVerifier() {
+    try {
+      const raw = localStorage.getItem(VERIFIER_KEY);
+      return raw ? Object.assign(empty(), JSON.parse(raw)) : empty();
+    } catch (err) {
+      return empty();
+    }
+  }
+
+  function hasPassword() {
+    const row = loadVerifier();
+    return Boolean(row.salt && row.hash);
+  }
+
+  function isUnlocked() {
+    return sessionStorage.getItem(SESSION_KEY) === "1" && hasPassword();
+  }
+
+  function lock() {
+    sessionStorage.removeItem(SESSION_KEY);
+  }
+
+  async function derive(password, saltBytes) {
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      enc.encode(password),
+      "PBKDF2",
+      false,
+      ["deriveBits"]
+    );
+    const bits = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", hash: "SHA-256", salt: saltBytes, iterations: ITERS },
+      key,
+      256
+    );
+    return new Uint8Array(bits);
+  }
+
+  function toHex(bytes) {
+    return Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  function fromHex(hex) {
+    const out = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < out.length; i += 1) {
+      out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    }
+    return out;
+  }
+
+  async function setPassword(password) {
+    const pw = String(password || "");
+    if (pw.length < MIN) throw new Error("short");
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const hash = await derive(pw, salt);
+    const row = {
+      algo: "pbkdf2-sha256",
+      iters: ITERS,
+      salt: toHex(salt),
+      hash: toHex(hash),
+    };
+    localStorage.setItem(VERIFIER_KEY, JSON.stringify(row));
+    sessionStorage.setItem(SESSION_KEY, "1");
+    return row;
+  }
+
+  async function unlock(password) {
+    if (!hasPassword()) throw new Error("no_password");
+    const row = loadVerifier();
+    const got = await derive(String(password || ""), fromHex(row.salt));
+    const expected = fromHex(row.hash);
+    if (got.length !== expected.length) throw new Error("bad");
+    let ok = 0;
+    for (let i = 0; i < got.length; i += 1) ok |= got[i] ^ expected[i];
+    if (ok !== 0) throw new Error("bad");
+    sessionStorage.setItem(SESSION_KEY, "1");
+  }
+
+  return {
+    MIN,
+    hasPassword,
+    isUnlocked,
+    lock,
+    setPassword,
+    unlock,
+    verifier: loadVerifier,
+  };
+})();
+
 window.ConfdenceMcp = (() => {
   const KEY = "confdence.mcp.v1";
   const VERSION = "2026-08-18";
@@ -1161,9 +1331,10 @@ window.ConfdenceMcp = (() => {
     return row;
   }
 
-  function pack(record, incidents, consent) {
+  function pack(record, incidents, consent, auth) {
     return {
       consent: consent || load(),
+      auth: auth || null,
       record: record || {},
       incidents: incidents || [],
     };
@@ -1338,6 +1509,7 @@ window.ConfdenceCard = (() => {
   const card = window.ConfdenceCard;
   const incidents = window.ConfdenceIncidents;
   const mcpGate = window.ConfdenceMcp;
+  const auth = window.ConfdenceAuth;
   const state = {
     lang: localStorage.getItem("health.lang") || "fr",
     record: store.load(),
@@ -1773,6 +1945,13 @@ window.ConfdenceCard = (() => {
       if (!$("hold-card").classList.contains("hidden")) renderHold();
       if (state.incidentId) renderIncident();
     });
+    $("auth-set").addEventListener("click", () => $("auth-set-dialog").showModal());
+    $("auth-set-cancel").addEventListener("click", () => $("auth-set-dialog").close());
+    $("auth-set-form").addEventListener("submit", submitSetPassword);
+    $("auth-unlock").addEventListener("click", () => $("auth-unlock-dialog").showModal());
+    $("auth-unlock-cancel").addEventListener("click", () => $("auth-unlock-dialog").close());
+    $("auth-unlock-form").addEventListener("submit", submitUnlock);
+    $("auth-lock").addEventListener("click", submitLock);
     $("mcp-toggle").addEventListener("click", toggleMcp);
     $("mcp-cancel").addEventListener("click", () => $("mcp-dialog").close());
     $("mcp-form").addEventListener("submit", acceptMcp);
@@ -1829,13 +2008,23 @@ window.ConfdenceCard = (() => {
 
   function renderMcp() {
     const on = mcpGate.isEnabled();
-    $("mcp-state").textContent = on ? t("mcpOn") : t("mcpOff");
+    const hasPw = auth.hasPassword();
+    const unlocked = auth.isUnlocked();
+    let stateText = t("mcpOff");
+    if (!hasPw) stateText = t("mcpNeedAuth");
+    else if (!unlocked) stateText = t("authLocked");
+    else if (on) stateText = t("mcpOn");
+    $("mcp-state").textContent = stateText;
+    $("auth-set").classList.toggle("hidden", hasPw);
+    $("auth-unlock").classList.toggle("hidden", !hasPw || unlocked);
+    $("auth-lock").classList.toggle("hidden", !unlocked);
+    $("mcp-toggle").classList.toggle("hidden", !unlocked);
     $("mcp-toggle").textContent = on ? t("mcpDisable") : t("mcpEnable");
     $("mcp-toggle").classList.toggle("primary", !on);
     $("mcp-toggle").classList.toggle("ghost", on);
-    $("mcp-pack").classList.toggle("hidden", !on);
-    $("mcp-snippet").classList.toggle("hidden", !on);
-    $("mcp-snippet").textContent = on ? mcpSnippet() : "";
+    $("mcp-pack").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-snippet").classList.toggle("hidden", !on || !unlocked);
+    $("mcp-snippet").textContent = on && unlocked ? mcpSnippet() : "";
   }
 
   function mcpAcksFromForm() {
@@ -1848,7 +2037,12 @@ window.ConfdenceCard = (() => {
   }
 
   function downloadPack() {
-    const payload = mcpGate.pack(state.record, incidents.loadAll(), mcpGate.load());
+    const payload = mcpGate.pack(
+      state.record,
+      incidents.loadAll(),
+      mcpGate.load(),
+      auth.hasPassword() ? auth.verifier() : null
+    );
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1921,7 +2115,86 @@ window.ConfdenceCard = (() => {
     downloadPack();
   }
 
+  async function submitSetPassword(event) {
+    event.preventDefault();
+    const form = $("auth-set-form");
+    const pw = form.password.value;
+    const again = form.confirm.value;
+    if (pw !== again) {
+      toast(t("authNeedMatch"));
+      return;
+    }
+    if (pw.length < auth.MIN) {
+      toast(t("authTooShort"));
+      return;
+    }
+    try {
+      await auth.setPassword(pw);
+    } catch (err) {
+      toast(t("authTooShort"));
+      return;
+    }
+    await persistAuth("set", pw);
+    form.reset();
+    $("auth-set-dialog").close();
+    renderMcp();
+    toast(t("authReady"));
+  }
+
+  async function submitUnlock(event) {
+    event.preventDefault();
+    const form = $("auth-unlock-form");
+    const pw = form.password.value;
+    try {
+      await auth.unlock(pw);
+    } catch (err) {
+      toast(t("authBad"));
+      return;
+    }
+    await persistAuth("unlock", pw);
+    form.reset();
+    $("auth-unlock-dialog").close();
+    renderMcp();
+    toast(t("authUnlocked"));
+  }
+
+  async function submitLock() {
+    auth.lock();
+    await persistAuth("lock", "");
+    if (mcpGate.isEnabled()) {
+      /* consent stays; connection is what lock cuts */
+    }
+    renderMcp();
+    toast(t("authLocked"));
+  }
+
+  async function persistAuth(kind, password) {
+    const token = csrfToken();
+    if (!token || location.protocol === "file:") return;
+    const path =
+      kind === "set" ? "/api/auth/set" : kind === "unlock" ? "/api/auth/unlock" : "/api/auth/lock";
+    const body = kind === "lock" ? {} : { password: password };
+    try {
+      await fetch(path, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": token,
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      /* Pages / file — Mac unlock is the agent gate */
+    }
+  }
+
   function toggleMcp() {
+    if (!auth.isUnlocked()) {
+      toast(t("mcpNeedAuth"));
+      if (!auth.hasPassword()) $("auth-set-dialog").showModal();
+      else $("auth-unlock-dialog").showModal();
+      return;
+    }
     if (mcpGate.isEnabled()) {
       mcpGate.disable();
       persistConsent(false, []);

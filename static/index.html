@@ -74,7 +74,10 @@
         <p class="fine" id="mcp-state"></p>
         <p class="warn" data-i18n="mcpRiskLine">Éteint par défaut. Un agent qui y a accès lit et peut changer ce dossier.</p>
         <div class="hero-actions">
-          <button type="button" class="primary" id="mcp-toggle" data-i18n="mcpEnable">Activer…</button>
+          <button type="button" class="primary" id="auth-set" data-i18n="authSet">Créer un mot de passe</button>
+          <button type="button" class="ghost hidden" id="auth-unlock" data-i18n="authUnlock">Déverrouiller</button>
+          <button type="button" class="ghost hidden" id="auth-lock" data-i18n="authLock">Verrouiller</button>
+          <button type="button" class="primary hidden" id="mcp-toggle" data-i18n="mcpEnable">Activer…</button>
           <button type="button" class="ghost hidden" id="mcp-pack" data-i18n="mcpDownload">Télécharger le paquet agent</button>
         </div>
         <pre class="url hidden" id="mcp-snippet"></pre>
@@ -150,6 +153,37 @@
       <button type="button" class="text-btn" id="inc-back" data-i18n="done">Fermer</button>
     </div>
   </section>
+
+  <dialog id="auth-set-dialog" class="dialog">
+    <form id="auth-set-form" method="dialog">
+      <h2 data-i18n="authSetTitle">Créer un mot de passe</h2>
+      <p class="warn" data-i18n="authSetHelp">Les agents ne se connectent pas tant que ce mot de passe n’est pas créé, puis déverrouillé. Dix caractères minimum.</p>
+      <label><span data-i18n="authPassword">Mot de passe</span>
+        <input name="password" type="password" minlength="10" autocomplete="new-password" required>
+      </label>
+      <label><span data-i18n="authPasswordAgain">Encore une fois</span>
+        <input name="confirm" type="password" minlength="10" autocomplete="new-password" required>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="auth-set-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="authSetSave">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="auth-unlock-dialog" class="dialog">
+    <form id="auth-unlock-form" method="dialog">
+      <h2 data-i18n="authUnlockTitle">Déverrouiller</h2>
+      <p class="fine" data-i18n="authUnlockHelp">Ensuite seulement, un agent peut se connecter.</p>
+      <label><span data-i18n="authPassword">Mot de passe</span>
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="auth-unlock-cancel" data-i18n="cancel">Annuler</button>
+        <button type="submit" class="primary" data-i18n="authUnlock">Déverrouiller</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="mcp-dialog" class="dialog">
     <form id="mcp-form" method="dialog">
@@ -263,6 +297,7 @@
   <script src="js/copy.js"></script>
   <script src="js/store.js"></script>
   <script src="js/incidents.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/mcp.js"></script>
   <script src="js/card.js"></script>
   <script src="js/app.js"></script>
